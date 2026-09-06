@@ -6,6 +6,7 @@ import AdminDashboard from "../pages/AdminDashboard";
 import GestionnaireDashboard from "../pages/GestionnaireDashboard";
 
 import ProtectedRoute from "./ProtectedRoute";
+import Layout from "../layouts/Layout"
 
 const AppRoutes = () => {
     return (
@@ -28,28 +29,32 @@ const AppRoutes = () => {
 
 
                 {/* =========================
-                    ROUTE ADMIN
+                    ESPACE ADMIN
                 ========================= */}
 
                 <Route
                     path="/admin/dashboard"
                     element={
                         <ProtectedRoute roles={["ADMIN"]}>
-                            <AdminDashboard />
+                            <Layout>
+                                <AdminDashboard />
+                            </Layout>
                         </ProtectedRoute>
                     }
                 />
 
 
                 {/* =========================
-                    ROUTE GESTIONNAIRE
+                    ESPACE GESTIONNAIRE
                 ========================= */}
 
                 <Route
                     path="/gestionnaire/dashboard"
                     element={
                         <ProtectedRoute roles={["GESTIONNAIRE"]}>
-                            <GestionnaireDashboard />
+                            <Layout>
+                                <GestionnaireDashboard />
+                            </Layout>
                         </ProtectedRoute>
                     }
                 />
