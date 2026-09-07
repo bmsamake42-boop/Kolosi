@@ -4,6 +4,7 @@ import Accueil from "../pages/Accueil";
 import Connexion from "../pages/Connexion";
 import AdminDashboard from "../pages/AdminDashboard";
 import GestionnaireDashboard from "../pages/GestionnaireDashboard";
+import AdminProduits from "../pages/AdminProduits"
 
 import ProtectedRoute from "./ProtectedRoute";
 import Layout from "../layouts/Layout"
@@ -38,6 +39,16 @@ const AppRoutes = () => {
                         <ProtectedRoute roles={["ADMIN"]}>
                             <Layout>
                                 <AdminDashboard />
+                            </Layout>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/produits"
+                    element={
+                        <ProtectedRoute roles={["ADMIN"]}>
+                            <Layout>
+                                <AdminProduits />
                             </Layout>
                         </ProtectedRoute>
                     }

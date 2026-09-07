@@ -164,15 +164,7 @@ const AdminDashboard = () => {
         {/* TITRE */}
         <div className="mb-8">
           <h1
-            className="
-              text-2xl
-              font-medium
-              text-blue-900
-              italic
-              sm:text-3xl
-              drop-shadow-blue-900
-              drop-shadow-xl
-            "
+            className="text-2xl font-bold text-blue-900 drop-shadow-2xl italic md:text-3xl"
           >
             Tableau de bord
           </h1>
