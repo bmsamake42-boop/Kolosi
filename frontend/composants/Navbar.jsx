@@ -84,7 +84,7 @@ const Navbar = () => {
 
     const liensAdmin = [
         {
-            nom: "Dashboard",
+            nom: "Tableau de bord",
             chemin: "/admin/dashboard",
             icon: LayoutDashboard,
         },
@@ -226,7 +226,7 @@ const Navbar = () => {
                         </div>
 
                         <div className="text-left">
-                            <p className="text-sm font-semibold text-gray-800">
+                            <p className="text-sm font-semibold text-blue-900">
                                 {utilisateur.prenom} {utilisateur.nom}
                             </p>
 
