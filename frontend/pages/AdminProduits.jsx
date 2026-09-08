@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-
+import FondDashboard from "../src/assets/FondDash.jpg";
 import {
   Plus,
   Search,
@@ -493,7 +493,21 @@ useEffect(() => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+    <div
+         className="
+           min-h-screen
+           bg-cover
+           bg-center
+           bg-fixed
+           px-4
+           py-6
+           sm:px-6
+           lg:px-8
+         "
+         style={{
+           backgroundImage: `url(${FondDashboard})`,
+         }}
+     >
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-blue-900 drop-shadow-2xl italic md:text-3xl">
           Produits
@@ -725,7 +739,7 @@ useEffect(() => {
             className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
               voirArchives
                 ? "bg-blue-800 text-white hover:bg-blue-900"
-                : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                : "border border-gray-300 text-gray-700 bg-red-200"
             }`}
           >
             {voirArchives ? (
@@ -758,7 +772,7 @@ useEffect(() => {
 
       <section className="overflow-hidden rounded-xl border-t-4 border-blue-900 bg-white shadow-sm">
         <div className="border-b border-gray-200 p-4 md:p-5">
-          <h2 className="font-semibold text-gray-800">
+          <h2 className="font-semibold text-blue-900">
             {voirArchives ? "Produits archivés" : "Liste des produits"}
           </h2>
 
