@@ -86,8 +86,7 @@ const ajouterProduit = async (req, res) => {
   }
 };
 
-// ==============================
-// RÉCUPÉRER TOUS LES PRODUITS
+
 // ==============================
 // ==============================
 // RÉCUPÉRER TOUS LES PRODUITS ACTIFS
