@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 import logo from "../src/assets/Logo.jpeg";
 import FondConnexion from "../src/assets/FondConnexion.png";
+import PageAccueil from "../pages/Accueil"
 
 const Connexion = () => {
   const navigate = useNavigate();
@@ -255,7 +256,9 @@ const Connexion = () => {
           >
             {chargement ? "Connexion..." : "Se connecter"}
           </button>
-
+                <Link to="/" className=" flex items-center justify-center italic text-blue-900 underline">
+                    Retourner à l'accueil
+                </Link>
         </form>
       </div>
     </div>
