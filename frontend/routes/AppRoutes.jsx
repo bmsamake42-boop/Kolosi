@@ -7,6 +7,7 @@ import GestionnaireDashboard from "../pages/GestionnaireDashboard";
 import AdminProduits from "../pages/AdminProduits"
 import GestionnaireProduits from "../pages/GestionnaireProduits";
 import Mouvements from "../pages/Mouvements";
+import Categories from "../pages/Categories";
 
 import ProtectedRoute from "./ProtectedRoute";
 import Layout from "../layouts/Layout"
@@ -61,6 +62,16 @@ const AppRoutes = () => {
                         <ProtectedRoute roles={["ADMIN"]}>
                             <Layout>
                                 <Mouvements />
+                            </Layout>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/categories"
+                    element={
+                        <ProtectedRoute roles={["ADMIN"]}>
+                            <Layout>
+                                <Categories />
                             </Layout>
                         </ProtectedRoute>
                     }

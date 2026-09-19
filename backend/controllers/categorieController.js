@@ -1,17 +1,17 @@
 const pool = require("../config/db");
 
+// Ajouter une catégorie
 const ajouterCategorie = async (req, res) => {
     try {
         const { nom_categorie } = req.body;
 
-        // Vérifier le champ
         if (!nom_categorie) {
             return res.status(400).json({
                 message: "Le nom de la catégorie est obligatoire"
             });
         }
 
-        // Vérifier si la catégorie existe déjà
+        // Vérifier si une catégorie active ou archivée porte déjà ce nom
         const [categories] = await pool.query(
             "SELECT id_categorie FROM categories WHERE nom_categorie = ?",
             [nom_categorie]
@@ -23,7 +23,6 @@ const ajouterCategorie = async (req, res) => {
             });
         }
 
-        // Insérer la catégorie
         const [result] = await pool.query(
             "INSERT INTO categories (nom_categorie) VALUES (?)",
             [nom_categorie]
@@ -42,13 +41,15 @@ const ajouterCategorie = async (req, res) => {
         });
     }
 };
-// La fonction getCategories récupère toutes les catégories de la base de données 
-// et les renvoie au client.
+
+
+// Récupérer uniquement les catégories actives
 const getCategories = async (req, res) => {
     try {
         const [categories] = await pool.query(
             `SELECT id_categorie, nom_categorie
              FROM categories
+             WHERE archive = 0
              ORDER BY id_categorie DESC`
         );
 
@@ -64,23 +65,50 @@ const getCategories = async (req, res) => {
         });
     }
 };
-// La fonction modifierCategorie met à jour le nom d'une catégorie
-//  existante dans la base de données.
+
+
+// Récupérer les catégories archivées
+const getCategoriesArchives = async (req, res) => {
+    try {
+        const [categories] = await pool.query(
+            `SELECT id_categorie, nom_categorie
+             FROM categories
+             WHERE archive = 1
+             ORDER BY id_categorie DESC`
+        );
+
+        res.status(200).json({
+            categories
+        });
+
+    } catch (error) {
+        console.error("Erreur récupération catégories archivées :", error);
+
+        res.status(500).json({
+            message: "Erreur serveur"
+        });
+    }
+};
+
+
+// Modifier une catégorie
 const modifierCategorie = async (req, res) => {
     try {
-        const { id} = req.params;
+        const { id } = req.params;
         const { nom_categorie } = req.body;
 
-        // Vérifier le nom
         if (!nom_categorie) {
             return res.status(400).json({
                 message: "Le nom de la catégorie est obligatoire"
             });
         }
 
-        // Vérifier que la catégorie existe
+        // Vérifier que la catégorie existe et est active
         const [categories] = await pool.query(
-            "SELECT id_categorie FROM categories WHERE id_categorie = ?",
+            `SELECT id_categorie
+             FROM categories
+             WHERE id_categorie = ?
+             AND archive = 0`,
             [id]
         );
 
@@ -90,7 +118,6 @@ const modifierCategorie = async (req, res) => {
             });
         }
 
-        // Modifier la catégorie
         await pool.query(
             "UPDATE categories SET nom_categorie = ? WHERE id_categorie = ?",
             [nom_categorie, id]
@@ -108,14 +135,19 @@ const modifierCategorie = async (req, res) => {
         });
     }
 };
-// La fonction supprimerCategorie supprime une catégorie existante de la base de données.
-const supprimerCategorie = async (req, res) => {
+
+
+// Archiver une catégorie
+const archiverCategorie = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Vérifier si la catégorie existe
+        // Vérifier que la catégorie existe et est active
         const [categories] = await pool.query(
-            "SELECT id_categorie FROM categories WHERE id_categorie = ?",
+            `SELECT id_categorie
+             FROM categories
+             WHERE id_categorie = ?
+             AND archive = 0`,
             [id]
         );
 
@@ -125,27 +157,73 @@ const supprimerCategorie = async (req, res) => {
             });
         }
 
-        // Supprimer la catégorie
         await pool.query(
-            "DELETE FROM categories WHERE id_categorie = ?",
+            `UPDATE categories
+             SET archive = 1
+             WHERE id_categorie = ?`,
             [id]
         );
 
         res.status(200).json({
-            message: "Catégorie supprimée avec succès"
+            message: "Catégorie archivée avec succès"
         });
 
     } catch (error) {
-        console.error("Erreur suppression catégorie :", error);
+        console.error("Erreur archivage catégorie :", error);
 
         res.status(500).json({
             message: "Erreur serveur"
         });
     }
 };
+
+
+// Restaurer une catégorie
+const restaurerCategorie = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Vérifier que la catégorie existe et est archivée
+        const [categories] = await pool.query(
+            `SELECT id_categorie
+             FROM categories
+             WHERE id_categorie = ?
+             AND archive = 1`,
+            [id]
+        );
+
+        if (categories.length === 0) {
+            return res.status(404).json({
+                message: "Catégorie archivée introuvable"
+            });
+        }
+
+        await pool.query(
+            `UPDATE categories
+             SET archive = 0
+             WHERE id_categorie = ?`,
+            [id]
+        );
+
+        res.status(200).json({
+            message: "Catégorie restaurée avec succès"
+        });
+
+    } catch (error) {
+        console.error("Erreur restauration catégorie :", error);
+
+        res.status(500).json({
+            message: "Erreur serveur"
+        });
+    }
+};
+
+
 module.exports = {
     ajouterCategorie,
     getCategories,
+    getCategoriesArchives,
     modifierCategorie,
-    supprimerCategorie
+    archiverCategorie,
+    restaurerCategorie
 };
