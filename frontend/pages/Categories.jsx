@@ -393,7 +393,7 @@ const Categories = () => {
                                 onChange={(e) =>
                                     setNomCategorie(e.target.value)
                                 }
-                                placeholder="Ex : Boissons"
+                                placeholder="Ex : Boisson"
                                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                             />
                         </div>

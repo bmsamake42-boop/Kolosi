@@ -8,6 +8,7 @@ import AdminProduits from "../pages/AdminProduits"
 import GestionnaireProduits from "../pages/GestionnaireProduits";
 import Mouvements from "../pages/Mouvements";
 import Categories from "../pages/Categories";
+import Alertes from "../pages/Alertes";
 
 import ProtectedRoute from "./ProtectedRoute";
 import Layout from "../layouts/Layout"
@@ -76,6 +77,17 @@ const AppRoutes = () => {
                         </ProtectedRoute>
                     }
                 />
+                 <Route
+                    path="/admin/alertes"
+                    element={
+                        <ProtectedRoute roles={["ADMIN"]}>
+                            <Layout>
+                                <Alertes />
+                            </Layout>
+                        </ProtectedRoute>
+                    }
+                />
+
 
 
                 {/* =========================
@@ -108,6 +120,16 @@ const AppRoutes = () => {
                         <ProtectedRoute roles={["GESTIONNAIRE"]}>
                             <Layout>
                                 <Mouvements />
+                            </Layout>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/gestionnaire/alertes"
+                    element={
+                        <ProtectedRoute roles={["GESTIONNAIRE"]}>
+                            <Layout>
+                                <Alertes />
                             </Layout>
                         </ProtectedRoute>
                     }
