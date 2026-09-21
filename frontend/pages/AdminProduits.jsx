@@ -10,6 +10,7 @@ import {
   X,
   RotateCcw,
 } from "lucide-react";
+import ConfirmationModal from "../composants/ConfirmationModal";
 
 const API_URL = "http://localhost:5000/api";
 
@@ -51,9 +52,20 @@ const AdminProduits = () => {
     id_categorie: "",
   });
 
+  // === États pour le modal de confirmation ===
+  const [modalConfirm, setModalConfirm] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    confirmText: "Confirmer",
+    confirmColor: "red",
+    action: null, // "archiver" | "restaurer"
+    id: null,
+  });
+  const [isConfirmLoading, setIsConfirmLoading] = useState(false);
+
   const afficherMessage = (texte) => {
     setMessage(texte);
-
     setTimeout(() => {
       setMessage("");
     }, 3000);
@@ -94,9 +106,7 @@ const AdminProduits = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message || "Erreur récupération catégories"
-        );
+        throw new Error(data.message || "Erreur récupération catégories");
       }
 
       setCategories(data.categories || []);
@@ -125,34 +135,37 @@ const AdminProduits = () => {
       setProduits(data.produits || []);
     } catch (err) {
       console.error(err);
-      setError(
-        err.message || "Impossible de récupérer les produits archivés."
-      );
+      setError(err.message || "Impossible de récupérer les produits archivés.");
     } finally {
       setLoading(false);
     }
   };
 
-useEffect(() => {
-  chargerCategories();
-}, []);
+  useEffect(() => {
+    chargerCategories();
+  }, []);
 
-useEffect(() => {
-  setPage(1);
+  useEffect(() => {
+    setPage(1);
 
-  if (voirArchives) {
-    chargerArchives();
-  } else {
-    chargerProduits();
-  }
-}, [voirArchives]);
+    if (voirArchives) {
+      chargerArchives();
+    } else {
+      chargerProduits();
+    }
+  }, [voirArchives]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    const champsACapitaliser = ["nom_produit", "description"];
+
+    const valeurFinale = champsACapitaliser.includes(name)
+      ? capitalizeWords(value)
+      : value;
 
     setFormulaire((ancien) => ({
       ...ancien,
-      [name]: value,
+      [name]: valeurFinale,
     }));
   };
 
@@ -213,14 +226,8 @@ useEffect(() => {
     const stock = Number(produit.quantite_stock);
     const seuil = Number(produit.seuil_minimum);
 
-    if (stock === 0) {
-      return "rupture";
-    }
-
-    if (stock <= seuil) {
-      return "faible";
-    }
-
+    if (stock === 0) return "rupture";
+    if (stock <= seuil) return "faible";
     return "normal";
   };
 
@@ -229,16 +236,13 @@ useEffect(() => {
 
     if (recherche.trim()) {
       resultat = resultat.filter((produit) =>
-        produit.nom_produit
-          .toLowerCase()
-          .includes(recherche.toLowerCase())
+        produit.nom_produit.toLowerCase().includes(recherche.toLowerCase())
       );
     }
 
     if (categorieFiltre) {
       resultat = resultat.filter(
-        (produit) =>
-          String(produit.id_categorie) === String(categorieFiltre)
+        (produit) => String(produit.id_categorie) === String(categorieFiltre)
       );
     }
 
@@ -250,60 +254,36 @@ useEffect(() => {
 
     switch (tri) {
       case "nom_asc":
-        resultat.sort((a, b) =>
-          a.nom_produit.localeCompare(b.nom_produit)
-        );
+        resultat.sort((a, b) => a.nom_produit.localeCompare(b.nom_produit));
         break;
-
       case "nom_desc":
-        resultat.sort((a, b) =>
-          b.nom_produit.localeCompare(a.nom_produit)
-        );
+        resultat.sort((a, b) => b.nom_produit.localeCompare(a.nom_produit));
         break;
-
       case "prix_asc":
         resultat.sort((a, b) => Number(a.prix) - Number(b.prix));
         break;
-
       case "prix_desc":
         resultat.sort((a, b) => Number(b.prix) - Number(a.prix));
         break;
-
       case "stock_asc":
         resultat.sort(
-          (a, b) =>
-            Number(a.quantite_stock) -
-            Number(b.quantite_stock)
+          (a, b) => Number(a.quantite_stock) - Number(b.quantite_stock)
         );
         break;
-
       case "stock_desc":
         resultat.sort(
-          (a, b) =>
-            Number(b.quantite_stock) -
-            Number(a.quantite_stock)
+          (a, b) => Number(b.quantite_stock) - Number(a.quantite_stock)
         );
         break;
-
       default:
         break;
     }
 
     return resultat;
-  }, [
-    produits,
-    recherche,
-    categorieFiltre,
-    etatFiltre,
-    tri,
-  ]);
+  }, [produits, recherche, categorieFiltre, etatFiltre, tri]);
 
-  const totalPages = Math.ceil(
-    produitsFiltres.length / produitsParPage
-  );
-
+  const totalPages = Math.ceil(produitsFiltres.length / produitsParPage);
   const indexDebut = (page - 1) * produitsParPage;
-
   const produitsAffiches = produitsFiltres.slice(
     indexDebut,
     indexDebut + produitsParPage
@@ -313,40 +293,70 @@ useEffect(() => {
     if (totalPages > 0 && page > totalPages) {
       setPage(totalPages);
     }
-
     if (totalPages === 0) {
       setPage(1);
     }
   }, [page, totalPages]);
 
-  const archiverProduit = async (id) => {
-    const confirmation = window.confirm(
-      "Voulez-vous vraiment archiver ce produit ?"
-    );
+  // === Fonctions de confirmation ===
+  const ouvrirConfirmationArchiver = (id, nom) => {
+    setModalConfirm({
+      isOpen: true,
+      title: "Archiver ce produit ?",
+      message: `Le produit « ${nom} » sera archivé. Il n’apparaîtra plus dans le catalogue actif.`,
+      confirmText: "Oui, archiver",
+      confirmColor: "orange",
+      action: "archiver",
+      id,
+    });
+  };
 
-    if (!confirmation) return;
+  const ouvrirConfirmationRestaurer = (id, nom) => {
+    setModalConfirm({
+      isOpen: true,
+      title: "Restaurer ce produit ?",
+      message: `Le produit « ${nom} » sera restauré et redeviendra visible dans le catalogue.`,
+      confirmText: "Oui, restaurer",
+      confirmColor: "green",
+      action: "restaurer",
+      id,
+    });
+  };
 
+  const confirmerAction = async () => {
+    if (!modalConfirm.id || !modalConfirm.action) return;
+
+    setIsConfirmLoading(true);
     setError("");
     setMessage("");
 
     try {
-      const response = await fetch(
-        `${API_URL}/produits/${id}/archiver`,
-        {
-          method: "PUT",
-          credentials: "include",
-        }
-      );
+      const endpoint =
+        modalConfirm.action === "archiver"
+          ? `${API_URL}/produits/${modalConfirm.id}/archiver`
+          : `${API_URL}/produits/${modalConfirm.id}/restaurer`;
+
+      const response = await fetch(endpoint, {
+        method: "PUT",
+        credentials: "include",
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Impossible d'archiver le produit."
+          data.message ||
+            (modalConfirm.action === "archiver"
+              ? "Impossible d'archiver le produit."
+              : "Impossible de restaurer le produit.")
         );
       }
 
-      afficherMessage("Produit archivé avec succès.");
+      afficherMessage(
+        modalConfirm.action === "archiver"
+          ? "Produit archivé avec succès."
+          : "Produit restauré avec succès."
+      );
 
       if (voirArchives) {
         await chargerArchives();
@@ -356,41 +366,9 @@ useEffect(() => {
     } catch (err) {
       console.error(err);
       setError(err.message);
-    }
-  };
-
-  const restaurerProduit = async (id) => {
-    const confirmation = window.confirm(
-      "Voulez-vous restaurer ce produit ?"
-    );
-
-    if (!confirmation) return;
-
-    setError("");
-    setMessage("");
-
-    try {
-      const response = await fetch(
-        `${API_URL}/produits/${id}/restaurer`,
-        {
-          method: "PUT",
-          credentials: "include",
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Impossible de restaurer le produit."
-        );
-      }
-
-      afficherMessage("Produit restauré avec succès.");
-      await chargerArchives();
-    } catch (err) {
-      console.error(err);
-      setError(err.message);
+    } finally {
+      setIsConfirmLoading(false);
+      setModalConfirm((prev) => ({ ...prev, isOpen: false }));
     }
   };
 
@@ -428,12 +406,8 @@ useEffect(() => {
           body: JSON.stringify({
             ...formulaireModification,
             prix: Number(formulaireModification.prix),
-            seuil_minimum: Number(
-              formulaireModification.seuil_minimum
-            ),
-            id_categorie: Number(
-              formulaireModification.id_categorie
-            ),
+            seuil_minimum: Number(formulaireModification.seuil_minimum),
+            id_categorie: Number(formulaireModification.id_categorie),
           }),
         }
       );
@@ -441,9 +415,7 @@ useEffect(() => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message || "Impossible de modifier le produit."
-        );
+        throw new Error(data.message || "Impossible de modifier le produit.");
       }
 
       afficherMessage("Produit modifié avec succès.");
@@ -492,27 +464,21 @@ useEffect(() => {
     setPage(1);
   };
 
+  const capitalizeWords = (text) => {
+    return text.replace(/(^|\s)\S/g, (lettre) => lettre.toUpperCase());
+  };
+
   return (
     <div
-         className="
-           min-h-screen
-           bg-cover
-           bg-center
-           bg-fixed
-           px-4
-           py-6
-           sm:px-6
-           lg:px-8
-         "
-         style={{
-           backgroundImage: `url(${FondDashboard})`,
-         }}
-     >
+      className="min-h-screen bg-cover bg-center bg-fixed px-4 py-6 sm:px-6 lg:px-8"
+      style={{
+        backgroundImage: `url(${FondDashboard})`,
+      }}
+    >
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-blue-900 drop-shadow-2xl italic md:text-3xl">
           Produits
         </h1>
-
         <p className="mt-1 text-sm text-gray-500">
           Gérez les produits de votre stock
         </p>
@@ -534,7 +500,6 @@ useEffect(() => {
         <section className="mb-5 rounded-xl border-t-4 border-blue-900 bg-white p-4 shadow-sm md:p-5">
           <div className="mb-4 flex items-center gap-2">
             <Plus size={20} className="text-blue-900" />
-
             <h2 className="font-semibold text-blue-900 drop-shadow-xl">
               Ajouter un produit
             </h2>
@@ -548,7 +513,6 @@ useEffect(() => {
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Nom
               </label>
-
               <input
                 type="text"
                 name="nom_produit"
@@ -556,7 +520,7 @@ useEffect(() => {
                 onChange={handleChange}
                 required
                 placeholder="Nom du produit"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700"
+                className="capitalize w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700"
               />
             </div>
 
@@ -564,14 +528,13 @@ useEffect(() => {
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Description
               </label>
-
               <input
                 type="text"
                 name="description"
                 value={formulaire.description}
                 onChange={handleChange}
                 placeholder="Description"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700"
+                className="capitalize w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700"
               />
             </div>
 
@@ -579,7 +542,6 @@ useEffect(() => {
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Prix
               </label>
-
               <input
                 type="number"
                 name="prix"
@@ -596,7 +558,6 @@ useEffect(() => {
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Stock
               </label>
-
               <input
                 type="number"
                 name="quantite_stock"
@@ -612,7 +573,6 @@ useEffect(() => {
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Seuil
               </label>
-
               <input
                 type="number"
                 name="seuil_minimum"
@@ -628,7 +588,6 @@ useEffect(() => {
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Catégorie
               </label>
-
               <select
                 name="id_categorie"
                 value={formulaire.id_categorie}
@@ -637,7 +596,6 @@ useEffect(() => {
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700"
               >
                 <option value="">Catégorie</option>
-
                 {categories.map((categorie) => (
                   <option
                     key={categorie.id_categorie}
@@ -669,7 +627,6 @@ useEffect(() => {
               size={18}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
             />
-
             <input
               type="text"
               value={recherche}
@@ -691,7 +648,6 @@ useEffect(() => {
             className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue-700"
           >
             <option value="">Toutes les catégories</option>
-
             {categories.map((categorie) => (
               <option
                 key={categorie.id_categorie}
@@ -775,7 +731,6 @@ useEffect(() => {
           <h2 className="font-semibold text-blue-900">
             {voirArchives ? "Produits archivés" : "Liste des produits"}
           </h2>
-
           <p className="mt-1 text-sm text-gray-500">
             {produitsFiltres.length} produit
             {produitsFiltres.length > 1 ? "s" : ""}
@@ -792,6 +747,7 @@ useEffect(() => {
           </div>
         ) : (
           <>
+            {/* Version desktop */}
             <div className="hidden overflow-x-auto md:block">
               <table className="w-full">
                 <thead className="border-b border-gray-200 bg-blue-100">
@@ -799,23 +755,18 @@ useEffect(() => {
                     <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500">
                       Produit
                     </th>
-
                     <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500">
                       Catégorie
                     </th>
-
                     <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500">
                       Prix
                     </th>
-
                     <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500">
                       Stock
                     </th>
-
                     <th className="px-5 py-3 text-left text-xs font-semibold uppercase text-gray-500">
                       État
                     </th>
-
                     <th className="px-5 py-3 text-right text-xs font-semibold uppercase text-gray-500">
                       Actions
                     </th>
@@ -832,7 +783,6 @@ useEffect(() => {
                         <p className="font-medium text-gray-800">
                           {produit.nom_produit}
                         </p>
-
                         {produit.description && (
                           <p className="mt-1 max-w-xs truncate text-xs text-gray-500">
                             {produit.description}
@@ -852,15 +802,12 @@ useEffect(() => {
                         <span className="font-medium">
                           {produit.quantite_stock}
                         </span>
-
                         <span className="ml-1 text-xs text-gray-400">
                           / seuil {produit.seuil_minimum}
                         </span>
                       </td>
 
-                      <td className="px-5 py-4">
-                        {afficherEtat(produit)}
-                      </td>
+                      <td className="px-5 py-4">{afficherEtat(produit)}</td>
 
                       <td className="px-5 py-4">
                         <div className="flex justify-end gap-2">
@@ -878,7 +825,10 @@ useEffect(() => {
                               <button
                                 type="button"
                                 onClick={() =>
-                                  archiverProduit(produit.id_produit)
+                                  ouvrirConfirmationArchiver(
+                                    produit.id_produit,
+                                    produit.nom_produit
+                                  )
                                 }
                                 title="Archiver"
                                 className="rounded-lg p-2 text-orange-600 transition hover:bg-orange-50"
@@ -892,7 +842,10 @@ useEffect(() => {
                             <button
                               type="button"
                               onClick={() =>
-                                restaurerProduit(produit.id_produit)
+                                ouvrirConfirmationRestaurer(
+                                  produit.id_produit,
+                                  produit.nom_produit
+                                )
                               }
                               title="Restaurer"
                               className="rounded-lg p-2 text-green-700 transition hover:bg-green-50"
@@ -908,23 +861,19 @@ useEffect(() => {
               </table>
             </div>
 
+            {/* Version mobile */}
             <div className="divide-y divide-gray-100 md:hidden">
               {produitsAffiches.map((produit) => (
-                <div
-                  key={produit.id_produit}
-                  className="p-4"
-                >
+                <div key={produit.id_produit} className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h3 className="font-semibold text-gray-800">
                         {produit.nom_produit}
                       </h3>
-
                       <p className="mt-1 text-sm text-gray-500">
                         {produit.nom_categorie}
                       </p>
                     </div>
-
                     {afficherEtat(produit)}
                   </div>
 
@@ -936,20 +885,13 @@ useEffect(() => {
 
                   <div className="mt-4 grid grid-cols-2 gap-3">
                     <div>
-                      <span className="text-xs text-gray-400">
-                        Prix
-                      </span>
-
+                      <span className="text-xs text-gray-400">Prix</span>
                       <p className="font-medium text-gray-700">
                         {Number(produit.prix).toLocaleString("fr-FR")} FCFA
                       </p>
                     </div>
-
                     <div>
-                      <span className="text-xs text-gray-400">
-                        Stock
-                      </span>
-
+                      <span className="text-xs text-gray-400">Stock</span>
                       <p className="font-medium text-gray-700">
                         {produit.quantite_stock}
                       </p>
@@ -971,7 +913,10 @@ useEffect(() => {
                         <button
                           type="button"
                           onClick={() =>
-                            archiverProduit(produit.id_produit)
+                            ouvrirConfirmationArchiver(
+                              produit.id_produit,
+                              produit.nom_produit
+                            )
                           }
                           className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-orange-200 py-2 text-sm text-orange-600"
                         >
@@ -985,7 +930,10 @@ useEffect(() => {
                       <button
                         type="button"
                         onClick={() =>
-                          restaurerProduit(produit.id_produit)
+                          ouvrirConfirmationRestaurer(
+                            produit.id_produit,
+                            produit.nom_produit
+                          )
                         }
                         className="flex w-full items-center justify-center gap-2 rounded-lg border border-green-200 py-2 text-sm text-green-700"
                       >
@@ -1011,23 +959,22 @@ useEffect(() => {
               <ChevronLeft size={18} />
             </button>
 
-            {Array.from(
-              { length: totalPages },
-              (_, index) => index + 1
-            ).map((numero) => (
-              <button
-                key={numero}
-                type="button"
-                onClick={() => setPage(numero)}
-                className={`h-9 min-w-9 rounded-lg px-2 text-sm font-medium ${
-                  page === numero
-                    ? "bg-blue-800 text-white"
-                    : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                {numero}
-              </button>
-            ))}
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+              (numero) => (
+                <button
+                  key={numero}
+                  type="button"
+                  onClick={() => setPage(numero)}
+                  className={`h-9 min-w-9 rounded-lg px-2 text-sm font-medium ${
+                    page === numero
+                      ? "bg-blue-800 text-white"
+                      : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  {numero}
+                </button>
+              )
+            )}
 
             <button
               type="button"
@@ -1041,6 +988,7 @@ useEffect(() => {
         )}
       </section>
 
+      {/* Modal de modification */}
       {modalModifier && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
@@ -1048,7 +996,6 @@ useEffect(() => {
               <h2 className="font-semibold text-blue-900">
                 Modifier le produit
               </h2>
-
               <button
                 type="button"
                 onClick={() => {
@@ -1061,22 +1008,18 @@ useEffect(() => {
               </button>
             </div>
 
-            <form
-              onSubmit={modifierProduit}
-              className="space-y-4 p-5"
-            >
+            <form onSubmit={modifierProduit} className="space-y-4 p-5">
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700">
                   Nom
                 </label>
-
                 <input
                   type="text"
                   value={formulaireModification.nom_produit}
                   onChange={(e) =>
                     setFormulaireModification((ancien) => ({
                       ...ancien,
-                      nom_produit: e.target.value,
+                      nom_produit: capitalizeWords(e.target.value),
                     }))
                   }
                   required
@@ -1088,14 +1031,13 @@ useEffect(() => {
                 <label className="mb-1 block text-sm font-medium text-gray-700">
                   Description
                 </label>
-
                 <textarea
                   rows="3"
                   value={formulaireModification.description}
                   onChange={(e) =>
                     setFormulaireModification((ancien) => ({
                       ...ancien,
-                      description: e.target.value,
+                      description: capitalizeWords(e.target.value),
                     }))
                   }
                   className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2.5 outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700"
@@ -1107,7 +1049,6 @@ useEffect(() => {
                   <label className="mb-1 block text-sm font-medium text-gray-700">
                     Prix
                   </label>
-
                   <input
                     type="number"
                     min="1"
@@ -1127,7 +1068,6 @@ useEffect(() => {
                   <label className="mb-1 block text-sm font-medium text-gray-700">
                     Seuil minimum
                   </label>
-
                   <input
                     type="number"
                     min="0"
@@ -1148,7 +1088,6 @@ useEffect(() => {
                 <label className="mb-1 block text-sm font-medium text-gray-700">
                   Catégorie
                 </label>
-
                 <select
                   value={formulaireModification.id_categorie}
                   onChange={(e) =>
@@ -1161,7 +1100,6 @@ useEffect(() => {
                   className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 outline-none focus:border-blue-700"
                 >
                   <option value="">Sélectionner une catégorie</option>
-
                   {categories.map((categorie) => (
                     <option
                       key={categorie.id_categorie}
@@ -1184,7 +1122,6 @@ useEffect(() => {
                 >
                   Annuler
                 </button>
-
                 <button
                   type="submit"
                   className="rounded-lg bg-blue-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-900"
@@ -1196,6 +1133,21 @@ useEffect(() => {
           </div>
         </div>
       )}
+
+      {/* Modal de confirmation (archiver / restaurer) */}
+      <ConfirmationModal
+        isOpen={modalConfirm.isOpen}
+        title={modalConfirm.title}
+        message={modalConfirm.message}
+        confirmText={modalConfirm.confirmText}
+        cancelText="Annuler"
+        confirmColor={modalConfirm.confirmColor}
+        isLoading={isConfirmLoading}
+        onConfirm={confirmerAction}
+        onCancel={() =>
+          setModalConfirm((prev) => ({ ...prev, isOpen: false }))
+        }
+      />
     </div>
   );
 };
