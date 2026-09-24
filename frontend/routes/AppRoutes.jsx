@@ -9,6 +9,7 @@ import GestionnaireProduits from "../pages/GestionnaireProduits";
 import Mouvements from "../pages/Mouvements";
 import Categories from "../pages/Categories";
 import Alertes from "../pages/Alertes";
+import Gestionnaires from "../pages/Gestionnaires"
 
 import ProtectedRoute from "./ProtectedRoute";
 import Layout from "../layouts/Layout"
@@ -83,6 +84,16 @@ const AppRoutes = () => {
                         <ProtectedRoute roles={["ADMIN"]}>
                             <Layout>
                                 <Alertes />
+                            </Layout>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/gestionnaires"
+                    element={
+                        <ProtectedRoute roles={["ADMIN"]}>
+                            <Layout>
+                                <Gestionnaires />
                             </Layout>
                         </ProtectedRoute>
                     }

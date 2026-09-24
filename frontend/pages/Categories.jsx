@@ -14,6 +14,8 @@ import ConfirmationModal from "../composants/ConfirmationModal";
 const API_URL = "http://localhost:5000/api";
 
 const Categories = () => {
+  // state de l'atat de chargement en appuyant sur le bouton d'ajout
+  const [isAdding, setIsAdding] = useState(false);
   const [categories, setCategories] = useState([]);
   const [recherche, setRecherche] = useState("");
   const [voirArchives, setVoirArchives] = useState(false);
@@ -125,55 +127,68 @@ const Categories = () => {
     }
   }, [voirArchives]);
 
+  // Faire disparaître les messages après 3 secondes
+useEffect(() => {
+  if (message || erreur) {
+    const timer = setTimeout(() => {
+      setMessage("");
+      setErreur("");
+    }, 3000);
+    return () => clearTimeout(timer);
+  }
+}, [message, erreur]);
+
   // =========================
   // Ajouter une catégorie
   // =========================
-  const ajouterCategorie = async (e) => {
-    e.preventDefault();
+ const ajouterCategorie = async (e) => {
+  e.preventDefault();
 
-    if (!nomCategorie.trim()) {
-      setErreur("Le nom de la catégorie est obligatoire");
-      return;
+  if (!nomCategorie.trim()) {
+    setErreur("Le nom de la catégorie est obligatoire");
+    return;
+  }
+
+  try {
+    setErreur("");
+    setMessage("");
+    setIsAdding(true);
+
+    // Loading de 3 secondes
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    const response = await fetch(`${API_URL}/categories`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        nom_categorie: nomCategorie.trim(),
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Erreur lors de l'ajout");
     }
 
-    try {
-      setErreur("");
-      setMessage("");
+    setMessage(data.message);
+    setNomCategorie("");
 
-      const response = await fetch(`${API_URL}/categories`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          nom_categorie: nomCategorie.trim(),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Erreur lors de l'ajout");
-      }
-
-      setMessage(data.message);
-      setNomCategorie("");
-
-      if (!voirArchives) {
-        chargerCategories();
-      }
-
-      setPageActuelle(1);
-
-      setTimeout(() => {
-        setMessage("");
-      }, 3000);
-    } catch (error) {
-      console.error(error);
-      setErreur(error.message);
+    if (!voirArchives) {
+      chargerCategories();
     }
-  };
+
+    setPageActuelle(1);
+  } catch (error) {
+    console.error(error);
+    setErreur(error.message);
+  } finally {
+    setIsAdding(false);
+  }
+};
 
   // =========================
   // Ouvrir confirmation archiver
@@ -385,38 +400,68 @@ const Categories = () => {
       )}
 
       {/* Formulaire d'ajout */}
-      {!voirArchives && (
-        <form
-          onSubmit={ajouterCategorie}
-          className="mb-6 rounded-xl bg-white p-4 shadow-sm"
-        >
-          <div className="flex flex-col gap-3 md:flex-row">
-            <div className="flex-1">
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Nom de la catégorie
-              </label>
+      {/* Formulaire d'ajout */}
+    {!voirArchives && (
+      <form
+        onSubmit={ajouterCategorie}
+        className="mb-6 rounded-xl bg-white p-4 shadow-sm"
+      >
+        <div className="flex flex-col gap-3 md:flex-row">
+          <div className="flex-1">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Nom de la catégorie
+            </label>
 
-              <input
-                type="text"
-                value={nomCategorie}
-                onChange={handleNomCategorieChange}
-                placeholder="Ex : Boisson"
-                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 capitalize"
-              />
-            </div>
-
-            <div className="flex items-end">
-              <button
-                type="submit"
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 md:w-auto"
-              >
-                <Plus size={18} />
-                Ajouter
-              </button>
-            </div>
+            <input
+              type="text"
+              value={nomCategorie}
+              onChange={handleNomCategorieChange}
+              placeholder="Ex : Boisson"
+              disabled={isAdding}
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 capitalize disabled:opacity-60"
+            />
           </div>
-        </form>
-      )}
+
+          <div className="flex items-end">
+            <button
+              type="submit"
+              disabled={isAdding}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70 md:w-auto"
+            >
+              {isAdding ? (
+                <>
+                  <svg
+                    className="h-4 w-4 animate-spin"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                  Ajout en cours...
+                </>
+              ) : (
+                <>
+                  <Plus size={18} />
+                  Ajouter
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </form>
+    )}
 
       {/* Recherche + bouton archives */}
       <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
