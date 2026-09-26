@@ -8,6 +8,7 @@ import {
   Check,
   Loader2,
 } from "lucide-react";
+import ConfirmationModal from "../composants/ConfirmationModal";
 
 const API_URL = "http://localhost:5000/api";
 
@@ -24,6 +25,17 @@ const Alertes = () => {
 
   const [quantites, setQuantites] = useState({});
   const [loadingUpdate, setLoadingUpdate] = useState({});
+
+  // Modal de confirmation
+  const [modalConfirm, setModalConfirm] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    idProduit: null,
+    nomProduit: "",
+    quantite: null,
+  });
+  const [isConfirmLoading, setIsConfirmLoading] = useState(false);
 
   const alertesParPage = 5;
 
@@ -153,7 +165,7 @@ const Alertes = () => {
     }));
   };
 
-  const ajouterEntreeStock = async (idProduit, nomProduit) => {
+  const ouvrirConfirmationReappro = (idProduit, nomProduit) => {
     const quantite = quantites[idProduit];
 
     if (
@@ -168,14 +180,25 @@ const Alertes = () => {
 
     const quantiteNum = Number(quantite);
 
-    const confirmation = window.confirm(
-      `Confirmer le réapprovisionnement de "${nomProduit}" ?\n\nQuantité à ajouter : ${quantiteNum}`
-    );
+    setModalConfirm({
+      isOpen: true,
+      title: "Confirmer le réapprovisionnement ?",
+      message: `Vous allez ajouter ${quantiteNum} unité(s) au produit « ${nomProduit} ».`,
+      idProduit,
+      nomProduit,
+      quantite: quantiteNum,
+    });
+  };
 
-    if (!confirmation) return;
+  const confirmerReappro = async () => {
+    if (!modalConfirm.idProduit || !modalConfirm.quantite) return;
 
     try {
-      setLoadingUpdate((prev) => ({ ...prev, [idProduit]: true }));
+      setIsConfirmLoading(true);
+      setLoadingUpdate((prev) => ({
+        ...prev,
+        [modalConfirm.idProduit]: true,
+      }));
       setErreurAction("");
       setMessageSucces("");
 
@@ -186,8 +209,8 @@ const Alertes = () => {
         },
         credentials: "include",
         body: JSON.stringify({
-          id_produit: idProduit,
-          quantite: quantiteNum,
+          id_produit: modalConfirm.idProduit,
+          quantite: modalConfirm.quantite,
         }),
       });
 
@@ -197,11 +220,13 @@ const Alertes = () => {
         throw new Error(data.message || "Erreur lors de l'entrée de stock");
       }
 
-      setMessageSucces(`Entrée de stock enregistrée pour "${nomProduit}"`);
+      setMessageSucces(
+        `Entrée de stock enregistrée pour « ${modalConfirm.nomProduit} »`
+      );
 
       setQuantites((prev) => {
         const nouveau = { ...prev };
-        delete nouveau[idProduit];
+        delete nouveau[modalConfirm.idProduit];
         return nouveau;
       });
 
@@ -210,7 +235,12 @@ const Alertes = () => {
       console.error(error);
       setErreurAction(error.message);
     } finally {
-      setLoadingUpdate((prev) => ({ ...prev, [idProduit]: false }));
+      setIsConfirmLoading(false);
+      setLoadingUpdate((prev) => ({
+        ...prev,
+        [modalConfirm.idProduit]: false,
+      }));
+      setModalConfirm((prev) => ({ ...prev, isOpen: false }));
     }
   };
 
@@ -302,7 +332,10 @@ const Alertes = () => {
             <button
               type="button"
               onClick={() =>
-                ajouterEntreeStock(alerte.id_produit, alerte.nom_produit)
+                ouvrirConfirmationReappro(
+                  alerte.id_produit,
+                  alerte.nom_produit
+                )
               }
               disabled={isLoading}
               className="flex items-center gap-1.5 rounded-lg bg-blue-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
@@ -334,7 +367,9 @@ const Alertes = () => {
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       {/* En-tête */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-blue-900 italic">Alertes de stock</h1>
+        <h1 className="text-3xl font-bold text-blue-900 italic">
+          Alertes de stock
+        </h1>
         <p className="mt-1 text-sm text-gray-500">
           Consultez et réapprovisionnez les produits en rupture ou en stock faible
         </p>
@@ -494,6 +529,21 @@ const Alertes = () => {
           </section>
         </div>
       )}
+
+      {/* Modal de confirmation */}
+      <ConfirmationModal
+        isOpen={modalConfirm.isOpen}
+        title={modalConfirm.title}
+        message={modalConfirm.message}
+        confirmText="Oui, réapprovisionner"
+        cancelText="Annuler"
+        confirmColor="blue"
+        isLoading={isConfirmLoading}
+        onConfirm={confirmerReappro}
+        onCancel={() =>
+          setModalConfirm((prev) => ({ ...prev, isOpen: false }))
+        }
+      />
     </div>
   );
 };

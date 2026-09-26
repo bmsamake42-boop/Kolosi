@@ -118,7 +118,7 @@ const handleChange = (e) => {
   const { name, value } = e.target;
 
   // On capitalise uniquement nom et prénom
-  const champsACapitaliser = ["nom", "prenom"];
+  const champsACapitaliser = ["nom","prenom"];
 
   const valeurFinale = champsACapitaliser.includes(name)
     ? capitalizeWords(value)
@@ -199,7 +199,7 @@ const handleChange = (e) => {
   const handleModificationChange = (e) => {
   const { name, value } = e.target;
 
-  const champsACapitaliser = ["nom", "prenom"];
+  const champsACapitaliser = ["nom","prenom"];
 
   const valeurFinale = champsACapitaliser.includes(name)
     ? capitalizeWords(value)
@@ -404,7 +404,7 @@ const handleChange = (e) => {
           onSubmit={ajouterGestionnaire}
           className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5"
         >
-          <div>
+           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Nom
             </label>
@@ -418,7 +418,6 @@ const handleChange = (e) => {
               className="capitalize w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
             />
           </div>
-
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
               Prénom
@@ -565,7 +564,7 @@ const handleChange = (e) => {
                   <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                     Nom
                   </th>
-                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                   <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                     Prénom
                   </th>
                   <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -641,6 +640,8 @@ const handleChange = (e) => {
                                 gestionnaire.id_utilisateur,
                                 gestionnaire.nom,
                                 gestionnaire.prenom
+                              
+                                
                               )
                             }
                             title="Réactiver"
@@ -720,6 +721,7 @@ const handleChange = (e) => {
             </div>
 
             <form onSubmit={modifierGestionnaire} className="space-y-4 p-5">
+          
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700">
                   Nom
@@ -732,8 +734,7 @@ const handleChange = (e) => {
                   className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
-
-              <div>
+                  <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700">
                   Prénom
                 </label>

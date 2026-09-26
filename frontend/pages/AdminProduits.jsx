@@ -15,6 +15,9 @@ import ConfirmationModal from "../composants/ConfirmationModal";
 const API_URL = "http://localhost:5000/api";
 
 const AdminProduits = () => {
+  //state pour le loading
+  const [isAdding, setIsAdding] = useState(false);
+
   const [produits, setProduits] = useState([]);
   const [categories, setCategories] = useState([]);
 
@@ -169,58 +172,68 @@ const AdminProduits = () => {
     }));
   };
 
-  const ajouterProduit = async (e) => {
-    e.preventDefault();
+const ajouterProduit = async (e) => {
+  e.preventDefault();
+  if (isAdding) return;
 
-    setError("");
-    setMessage("");
+  setIsAdding(true);
+  setError("");
+  setMessage("");
 
-    try {
-      const response = await fetch(`${API_URL}/produits`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formulaire,
-          prix: Number(formulaire.prix),
-          quantite_stock:
-            formulaire.quantite_stock === ""
-              ? 0
-              : Number(formulaire.quantite_stock),
-          seuil_minimum:
-            formulaire.seuil_minimum === ""
-              ? 0
-              : Number(formulaire.seuil_minimum),
-          id_categorie: Number(formulaire.id_categorie),
-        }),
-      });
+  try {
+    // On lance le délai de 3 secondes en parallèle
+    const delay = new Promise((resolve) => setTimeout(resolve, 3000));
 
-      const data = await response.json();
+    const response = await fetch(`${API_URL}/produits`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...formulaire,
+        prix: Number(formulaire.prix),
+        quantite_stock:
+          formulaire.quantite_stock === ""
+            ? 0
+            : Number(formulaire.quantite_stock),
+        seuil_minimum:
+          formulaire.seuil_minimum === ""
+            ? 0
+            : Number(formulaire.seuil_minimum),
+        id_categorie: Number(formulaire.id_categorie),
+      }),
+    });
 
-      if (!response.ok) {
-        throw new Error(data.message || "Erreur lors de l'ajout.");
-      }
+    const data = await response.json();
 
-      afficherMessage("Produit ajouté avec succès.");
-
-      setFormulaire({
-        nom_produit: "",
-        description: "",
-        prix: "",
-        quantite_stock: "",
-        seuil_minimum: "",
-        id_categorie: "",
-      });
-
-      setPage(1);
-      await chargerProduits();
-    } catch (err) {
-      console.error(err);
-      setError(err.message || "Impossible d'ajouter le produit.");
+    if (!response.ok) {
+      throw new Error(data.message || "Erreur lors de l'ajout.");
     }
-  };
+
+    // On attend que les 3 secondes soient passées
+    await delay;
+
+    afficherMessage("Produit ajouté avec succès.");
+
+    setFormulaire({
+      nom_produit: "",
+      description: "",
+      prix: "",
+      quantite_stock: "",
+      seuil_minimum: "",
+      id_categorie: "",
+    });
+
+    setPage(1);
+    await chargerProduits();
+  } catch (err) {
+    console.error(err);
+    setError(err.message || "Impossible d'ajouter le produit.");
+  } finally {
+    setIsAdding(false);
+  }
+};
 
   const getEtatStock = (produit) => {
     const stock = Number(produit.quantite_stock);
@@ -608,13 +621,23 @@ const AdminProduits = () => {
             </div>
 
             <div className="flex items-end">
-              <button
-                type="submit"
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
-              >
+         <button
+            type="submit"
+            disabled={isAdding}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isAdding ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Ajout...
+              </>
+            ) : (
+              <>
                 <Plus size={18} />
                 Ajouter
-              </button>
+              </>
+            )}
+          </button>
             </div>
           </form>
         </section>

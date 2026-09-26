@@ -14,6 +14,9 @@ import {
 const API_URL = "http://localhost:5000/api";
 
 const GestionnaireProduit = () => {
+  //state pour le loading
+  const [isAdding, setIsAdding] = useState(false);
+
   const [produits, setProduits] = useState([]);
   const [categories, setCategories] = useState([]);
 
@@ -147,67 +150,82 @@ useEffect(() => {
   }
 }, [voirArchives]);
 
-  const handleChange = (e) => {
+   const handleChange = (e) => {
     const { name, value } = e.target;
+    const champsACapitaliser = ["nom_produit", "description"];
+
+    const valeurFinale = champsACapitaliser.includes(name)
+      ? capitalizeWords(value)
+      : value;
 
     setFormulaire((ancien) => ({
       ...ancien,
-      [name]: value,
+      [name]: valeurFinale,
     }));
   };
 
-  const ajouterProduit = async (e) => {
-    e.preventDefault();
+ const ajouterProduit = async (e) => {
+  e.preventDefault();
+  if (isAdding) return;
 
-    setError("");
-    setMessage("");
+  setIsAdding(true);
+  setError("");
+  setMessage("");
 
-    try {
-      const response = await fetch(`${API_URL}/produits`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formulaire,
-          prix: Number(formulaire.prix),
-          quantite_stock:
-            formulaire.quantite_stock === ""
-              ? 0
-              : Number(formulaire.quantite_stock),
-          seuil_minimum:
-            formulaire.seuil_minimum === ""
-              ? 0
-              : Number(formulaire.seuil_minimum),
-          id_categorie: Number(formulaire.id_categorie),
-        }),
-      });
+  try {
+    // On lance le délai de 3 secondes en parallèle
+    const delay = new Promise((resolve) => setTimeout(resolve, 3000));
 
-      const data = await response.json();
+    const response = await fetch(`${API_URL}/produits`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...formulaire,
+        prix: Number(formulaire.prix),
+        quantite_stock:
+          formulaire.quantite_stock === ""
+            ? 0
+            : Number(formulaire.quantite_stock),
+        seuil_minimum:
+          formulaire.seuil_minimum === ""
+            ? 0
+            : Number(formulaire.seuil_minimum),
+        id_categorie: Number(formulaire.id_categorie),
+      }),
+    });
 
-      if (!response.ok) {
-        throw new Error(data.message || "Erreur lors de l'ajout.");
-      }
+    const data = await response.json();
 
-      afficherMessage("Produit ajouté avec succès.");
-
-      setFormulaire({
-        nom_produit: "",
-        description: "",
-        prix: "",
-        quantite_stock: "",
-        seuil_minimum: "",
-        id_categorie: "",
-      });
-
-      setPage(1);
-      await chargerProduits();
-    } catch (err) {
-      console.error(err);
-      setError(err.message || "Impossible d'ajouter le produit.");
+    if (!response.ok) {
+      throw new Error(data.message || "Erreur lors de l'ajout.");
     }
-  };
+
+    // On attend que les 3 secondes soient passées
+    await delay;
+
+    afficherMessage("Produit ajouté avec succès.");
+
+    setFormulaire({
+      nom_produit: "",
+      description: "",
+      prix: "",
+      quantite_stock: "",
+      seuil_minimum: "",
+      id_categorie: "",
+    });
+
+    setPage(1);
+    await chargerProduits();
+  } catch (err) {
+    console.error(err);
+    setError(err.message || "Impossible d'ajouter le produit.");
+  } finally {
+    setIsAdding(false);
+  }
+};
 
   const getEtatStock = (produit) => {
     const stock = Number(produit.quantite_stock);
@@ -492,6 +510,10 @@ useEffect(() => {
     setPage(1);
   };
 
+  const capitalizeWords = (text) => {
+    return text.replace(/(^|\s)\S/g, (lettre) => lettre.toUpperCase());
+  };
+
   return (
     <div
          className="
@@ -556,7 +578,7 @@ useEffect(() => {
                 onChange={handleChange}
                 required
                 placeholder="Nom du produit"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700"
+                className="capitalize w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700"
               />
             </div>
 
@@ -571,7 +593,7 @@ useEffect(() => {
                 value={formulaire.description}
                 onChange={handleChange}
                 placeholder="Description"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700"
+                className="capitalize w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700"
               />
             </div>
 
@@ -650,13 +672,23 @@ useEffect(() => {
             </div>
 
             <div className="flex items-end">
-              <button
-                type="submit"
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
-              >
-                <Plus size={18} />
-                Ajouter
-              </button>
+             <button
+              type="submit"
+              disabled={isAdding}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isAdding ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Ajout...
+                </>
+              ) : (
+                <>
+                  <Plus size={18} />
+                  Ajouter
+                </>
+              )}
+            </button>
             </div>
           </form>
         </section>
@@ -1076,7 +1108,7 @@ useEffect(() => {
                   onChange={(e) =>
                     setFormulaireModification((ancien) => ({
                       ...ancien,
-                      nom_produit: e.target.value,
+                      nom_produit: capitalizeWords(e.target.value),
                     }))
                   }
                   required
@@ -1095,7 +1127,7 @@ useEffect(() => {
                   onChange={(e) =>
                     setFormulaireModification((ancien) => ({
                       ...ancien,
-                      description: e.target.value,
+                      description: capitalizeWords(e.target.value),
                     }))
                   }
                   className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2.5 outline-none focus:border-blue-700 focus:ring-1 focus:ring-blue-700"
