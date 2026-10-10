@@ -10,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 import ConfirmationModal from "../composants/ConfirmationModal";
+import fond from "../src/assets/FondDash.jpg"
 
 const API_URL = "http://localhost:5000/api";
 
@@ -377,7 +378,21 @@ useEffect(() => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+     <div
+            className="
+              min-h-screen
+              bg-cover
+              bg-center
+              bg-fixed
+              px-4
+              py-6
+              sm:px-6
+              lg:px-8
+            "
+            style={{
+              backgroundImage: `url(${fond})`,
+            }}
+          >
       {/* En-tête */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-blue-900 italic">Catégories</h1>
@@ -408,7 +423,7 @@ useEffect(() => {
       >
         <div className="flex flex-col gap-3 md:flex-row">
           <div className="flex-1">
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1 block text-sm font-medium text-blue-900">
               Nom de la catégorie
             </label>
 
@@ -416,7 +431,7 @@ useEffect(() => {
               type="text"
               value={nomCategorie}
               onChange={handleNomCategorieChange}
-              placeholder="Ex : Boisson"
+              placeholder="Ex : Boisson, Cereale, Autres..."
               disabled={isAdding}
               className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 capitalize disabled:opacity-60"
             />
@@ -520,7 +535,7 @@ useEffect(() => {
             {/* Desktop */}
             <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-left text-gray-600">
+                <thead className="bg-gray-50 text-left text-blue-900">
                   <tr>
                     <th className="px-5 py-3 font-medium">#</th>
                     <th className="px-5 py-3 font-medium">
@@ -716,7 +731,7 @@ useEffect(() => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-              <h2 className="font-semibold text-gray-800">
+              <h2 className="font-semibold text-blue-900">
                 Modifier la catégorie
               </h2>
 
@@ -734,7 +749,7 @@ useEffect(() => {
             </div>
 
             <form onSubmit={modifierCategorie} className="p-5">
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label className="mb-1 block text-sm font-medium text-blue-900">
                 Nom de la catégorie
               </label>
 

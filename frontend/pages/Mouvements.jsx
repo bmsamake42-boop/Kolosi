@@ -9,6 +9,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
+import Fond from "../src/assets/FondDash.jpg";
 
 const API_URL = "http://localhost:5000/api";
 const MOUVEMENTS_PAR_PAGE = 5;
@@ -185,6 +186,8 @@ const Mouvements = () => {
   // ==============================
   const enregistrerMouvements = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     setError("");
     setMessage("");
 
@@ -218,6 +221,9 @@ const Mouvements = () => {
     setIsSubmitting(true);
 
     try {
+      // Délai de 3 secondes en parallèle
+      const delay = new Promise((resolve) => setTimeout(resolve, 3000));
+
       const endpoint = typeMouvement === "ENTREE" ? "entree" : "sortie";
       let succes = 0;
       let erreurs = [];
@@ -248,6 +254,9 @@ const Mouvements = () => {
           );
         }
       }
+
+      // On attend que les 3 secondes soient passées
+      await delay;
 
       if (succes > 0) {
         afficherMessage(
@@ -348,16 +357,28 @@ const Mouvements = () => {
   };
 
   const formaterPrix = (montant) => {
-    return (
-      Number(montant).toLocaleString("fr-FR") + " FCFA"
-    );
+    return Number(montant).toLocaleString("fr-FR") + " FCFA";
   };
 
   // ==============================
   // RENDU
   // ==============================
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+    <div
+          className="
+            min-h-screen
+            bg-cover
+            bg-center
+            bg-fixed
+            px-4
+            py-6
+            sm:px-6
+            lg:px-8
+          "
+          style={{
+            backgroundImage: `url(${Fond})`,
+          }}
+        >
       {/* En-tête */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold italic text-blue-900 md:text-3xl">
@@ -586,16 +607,23 @@ const Mouvements = () => {
                   : "bg-orange-600 hover:bg-orange-700"
               }`}
             >
-              {typeMouvement === "ENTREE" ? (
-                <ArrowDownToLine size={18} />
+              {isSubmitting ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Enregistrement...
+                </>
               ) : (
-                <ArrowUpFromLine size={18} />
+                <>
+                  {typeMouvement === "ENTREE" ? (
+                    <ArrowDownToLine size={18} />
+                  ) : (
+                    <ArrowUpFromLine size={18} />
+                  )}
+                  {typeMouvement === "ENTREE"
+                    ? `Enregistrer ${lignes.length} entrée${lignes.length > 1 ? "s" : ""}`
+                    : `Enregistrer ${lignes.length} sortie${lignes.length > 1 ? "s" : ""}`}
+                </>
               )}
-              {isSubmitting
-                ? "Enregistrement..."
-                : typeMouvement === "ENTREE"
-                ? `Enregistrer ${lignes.length} entrée${lignes.length > 1 ? "s" : ""}`
-                : `Enregistrer ${lignes.length} sortie${lignes.length > 1 ? "s" : ""}`}
             </button>
           </div>
         </form>
@@ -673,7 +701,7 @@ const Mouvements = () => {
       {/* Historique */}
       <section className="overflow-hidden rounded-xl border-t-4 border-blue-900 bg-white shadow-sm">
         <div className="border-b border-gray-200 p-4 md:p-5">
-          <h2 className="font-semibold text-gray-800">
+          <h2 className="font-semibold text-blue-900">
             Historique des mouvements
           </h2>
           <p className="mt-1 text-sm text-gray-500">

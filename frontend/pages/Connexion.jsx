@@ -1,28 +1,122 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 
 import logo from "../src/assets/Logo.jpeg";
 import FondConnexion from "../src/assets/FondConnexion.png";
-import PageAccueil from "../pages/Accueil"
+
+const LOCK_STORAGE_KEY = "auth_lock";
 
 const Connexion = () => {
   const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
-
   const [email, setEmail] = useState("");
   const [motDePasse, setMotDePasse] = useState("");
-
   const [erreur, setErreur] = useState("");
   const [chargement, setChargement] = useState(false);
+
+  // Gestion du blocage
+  const [isLocked, setIsLocked] = useState(false);
+  const [remainingSeconds, setRemainingSeconds] = useState(0);
+  const timerRef = useRef(null);
+
+  // ========== UTILITAIRES LOCALSTORAGE ==========
+  const saveLockToStorage = (lockUntil, remainingSeconds) => {
+    localStorage.setItem(
+      LOCK_STORAGE_KEY,
+      JSON.stringify({
+        lockUntil,
+        remainingSeconds,
+        savedAt: Date.now(),
+      })
+    );
+  };
+
+  const loadLockFromStorage = () => {
+    try {
+      const raw = localStorage.getItem(LOCK_STORAGE_KEY);
+      if (!raw) return null;
+
+      const data = JSON.parse(raw);
+      const lockUntil = new Date(data.lockUntil);
+      const now = new Date();
+
+      if (lockUntil <= now) {
+        localStorage.removeItem(LOCK_STORAGE_KEY);
+        return null;
+      }
+
+      const remainingSeconds = Math.ceil((lockUntil - now) / 1000);
+      return { lockUntil: data.lockUntil, remainingSeconds };
+    } catch {
+      localStorage.removeItem(LOCK_STORAGE_KEY);
+      return null;
+    }
+  };
+
+  const clearLockStorage = () => {
+    localStorage.removeItem(LOCK_STORAGE_KEY);
+  };
+
+  // ========== FORMATAGE DU TEMPS ==========
+  const formatTime = (seconds) => {
+    if (seconds < 60) return `${seconds}s`;
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    if (m < 60) return `${m}min ${s}s`;
+    const h = Math.floor(m / 60);
+    const min = m % 60;
+    return `${h}h ${min}min`;
+  };
+
+  // ========== RESTAURER LE BLOCAGE AU CHARGEMENT ==========
+  useEffect(() => {
+    const saved = loadLockFromStorage();
+    if (saved) {
+      setIsLocked(true);
+      setRemainingSeconds(saved.remainingSeconds);
+      setErreur(
+        `Trop de tentatives. Réessayez dans ${formatTime(saved.remainingSeconds)}.`
+      );
+    }
+  }, []);
+
+  // ========== DÉCOMPTE EN DIRECT ==========
+  useEffect(() => {
+    if (remainingSeconds <= 0) {
+      setIsLocked(false);
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+
+    timerRef.current = setInterval(() => {
+      setRemainingSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          setIsLocked(false);
+          setErreur("");
+          clearLockStorage();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [remainingSeconds > 0]);
 
   const togglePasswordVisibility = () => {
     setShowPassword((prev) => !prev);
   };
 
+  // ========== SOUMISSION DU FORMULAIRE ==========
   const handleConnexion = async (e) => {
     e.preventDefault();
+
+    if (isLocked) return;
 
     setErreur("");
     setChargement(true);
@@ -32,13 +126,10 @@ const Connexion = () => {
         "http://localhost:5000/api/auth/connexion",
         {
           method: "POST",
-
           headers: {
             "Content-Type": "application/json",
           },
-
           credentials: "include",
-
           body: JSON.stringify({
             email,
             mot_de_passe: motDePasse,
@@ -48,16 +139,25 @@ const Connexion = () => {
 
       const data = await response.json();
 
-      // Si le backend retourne une erreur
+      // Compte bloqué (429)
+      if (response.status === 429 && data.locked) {
+        setIsLocked(true);
+        setRemainingSeconds(data.remainingSeconds || 30);
+        setErreur(data.message);
+        saveLockToStorage(data.lockUntil, data.remainingSeconds);
+        return;
+      }
+
       if (!response.ok) {
         setErreur(data.message || "Email ou mot de passe incorrect");
         return;
       }
 
-      // Récupération de l'utilisateur connecté
+      // Succès → on nettoie le storage
+      clearLockStorage();
+
       const utilisateur = data.utilisateur;
 
-      // Redirection selon le rôle
       if (utilisateur.role === "ADMIN") {
         navigate("/admin/dashboard");
       } else if (utilisateur.role === "GESTIONNAIRE") {
@@ -65,18 +165,15 @@ const Connexion = () => {
       } else {
         setErreur("Rôle utilisateur non reconnu");
       }
-
     } catch (error) {
       console.error("Erreur connexion :", error);
-
-      setErreur(
-        "Impossible de contacter le serveur."
-      );
-
+      setErreur("Impossible de contacter le serveur.");
     } finally {
       setChargement(false);
     }
   };
+
+  const formDisabled = chargement || isLocked;
 
   return (
     <div
@@ -87,7 +184,6 @@ const Connexion = () => {
       <div className="absolute inset-0 bg-black/40" />
 
       <div className="relative z-10 w-full max-w-md mx-auto">
-
         <form
           onSubmit={handleConnexion}
           className="
@@ -101,7 +197,6 @@ const Connexion = () => {
             shadow-blue-500
           "
         >
-
           {/* Logo */}
           <div className="mb-6 flex flex-col items-center space-y-4">
             <img
@@ -119,23 +214,24 @@ const Connexion = () => {
             />
           </div>
 
-          {/* Message d'erreur */}
+          {/* Message d'erreur / blocage */}
           {erreur && (
             <div
-              className="
-                rounded-lg
-                border
-                border-red-300
-                bg-red-50
-                px-4
-                py-3
-                text-center
-                text-sm
-                font-medium
-                text-red-700
-              "
+              className={`
+                rounded-lg border px-4 py-3 text-center text-sm font-medium
+                ${
+                  isLocked
+                    ? "border-orange-300 bg-orange-50 text-orange-800"
+                    : "border-red-300 bg-red-50 text-red-700"
+                }
+              `}
             >
               {erreur}
+              {isLocked && remainingSeconds > 0 && (
+                <div className="mt-1 font-bold">
+                  Temps restant : {formatTime(remainingSeconds)}
+                </div>
+              )}
             </div>
           )}
 
@@ -147,7 +243,6 @@ const Connexion = () => {
             >
               Email
             </label>
-
             <input
               id="email"
               name="email"
@@ -156,6 +251,7 @@ const Connexion = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={formDisabled}
               className="
                 rounded-lg
                 border-2
@@ -166,13 +262,14 @@ const Connexion = () => {
                 focus:border-blue-900
                 focus:ring-2
                 focus:ring-blue-900
+                disabled:bg-gray-100
+                disabled:cursor-not-allowed
               "
             />
           </div>
 
           {/* Mot de passe */}
           <div className="flex flex-col gap-2">
-
             <label
               htmlFor="password"
               className="text-sm font-medium text-gray-700"
@@ -181,7 +278,6 @@ const Connexion = () => {
             </label>
 
             <div className="relative">
-
               <input
                 id="password"
                 name="password"
@@ -190,6 +286,7 @@ const Connexion = () => {
                 value={motDePasse}
                 onChange={(e) => setMotDePasse(e.target.value)}
                 required
+                disabled={formDisabled}
                 className="
                   w-full
                   rounded-lg
@@ -202,12 +299,15 @@ const Connexion = () => {
                   focus:border-blue-900
                   focus:ring-2
                   focus:ring-blue-900
+                  disabled:bg-gray-100
+                  disabled:cursor-not-allowed
                 "
               />
 
               <button
                 type="button"
                 onClick={togglePasswordVisibility}
+                disabled={formDisabled}
                 className="
                   absolute
                   inset-y-0
@@ -218,6 +318,7 @@ const Connexion = () => {
                   text-gray-600
                   transition
                   hover:text-blue-900
+                  disabled:opacity-50
                 "
                 aria-label={
                   showPassword
@@ -225,20 +326,15 @@ const Connexion = () => {
                     : "Afficher le mot de passe"
                 }
               >
-                {showPassword ? (
-                  <EyeOff size={20} />
-                ) : (
-                  <Eye size={20} />
-                )}
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
-
             </div>
           </div>
 
           {/* Bouton connexion */}
           <button
             type="submit"
-            disabled={chargement}
+            disabled={formDisabled}
             className="
               w-full
               rounded-lg
@@ -254,11 +350,19 @@ const Connexion = () => {
               disabled:opacity-70
             "
           >
-            {chargement ? "Connexion..." : "Se connecter"}
+            {chargement
+              ? "Connexion..."
+              : isLocked
+              ? `Bloqué (${formatTime(remainingSeconds)})`
+              : "Se connecter"}
           </button>
-                <Link to="/" className=" flex items-center justify-center italic text-blue-900 underline">
-                    Retourner à l'accueil
-                </Link>
+
+          <Link
+            to="/"
+            className="flex items-center justify-center italic text-blue-900 underline"
+          >
+            Retourner à l'accueil
+          </Link>
         </form>
       </div>
     </div>

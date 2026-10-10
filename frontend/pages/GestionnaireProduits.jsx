@@ -11,6 +11,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 
+
 const API_URL = "http://localhost:5000/api";
 
 const GestionnaireProduit = () => {
@@ -1098,7 +1099,7 @@ useEffect(() => {
               className="space-y-4 p-5"
             >
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label className="mb-1 block text-sm font-medium text-blue-900">
                   Nom
                 </label>
 
@@ -1117,7 +1118,7 @@ useEffect(() => {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label className="mb-1 block text-sm font-medium text-blue-900">
                   Description
                 </label>
 
@@ -1136,7 +1137,7 @@ useEffect(() => {
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                  <label className="mb-1 block text-sm font-medium text-blue-900">
                     Prix
                   </label>
 
@@ -1156,7 +1157,7 @@ useEffect(() => {
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                  <label className="mb-1 block text-sm font-medium text-blue-900">
                     Seuil minimum
                   </label>
 
@@ -1177,7 +1178,7 @@ useEffect(() => {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label className="mb-1 block text-sm font-medium text-blue-900">
                   Catégorie
                 </label>
 

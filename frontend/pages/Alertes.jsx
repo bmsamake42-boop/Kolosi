@@ -9,6 +9,7 @@ import {
   Loader2,
 } from "lucide-react";
 import ConfirmationModal from "../composants/ConfirmationModal";
+import Fond from "../src/assets/FondDash.jpg"
 
 const API_URL = "http://localhost:5000/api";
 
@@ -364,7 +365,21 @@ const Alertes = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+     <div
+            className="
+              min-h-screen
+              bg-cover
+              bg-center
+              bg-fixed
+              px-4
+              py-6
+              sm:px-6
+              lg:px-8
+            "
+            style={{
+              backgroundImage: `url(${Fond})`,
+            }}
+          >
       {/* En-tête */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-blue-900 italic">

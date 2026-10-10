@@ -29,7 +29,7 @@ export default function ConfirmationModal({
 
       {/* Modal */}
       <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <h3 className="text-lg font-semibold text-blue-900">{title}</h3>
         <p className="mt-2 text-sm text-gray-600">{message}</p>
 
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

@@ -12,6 +12,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import ConfirmationModal from "../composants/ConfirmationModal";
+import Fond from "../src/assets/FondDash.jpg"
 
 const API_URL = "http://localhost:5000/api";
 const gestionnairesParPage = 5;
@@ -360,7 +361,21 @@ const handleChange = (e) => {
   // =========================
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+     <div
+            className="
+              min-h-screen
+              bg-cover
+              bg-center
+              bg-fixed
+              px-4
+              py-6
+              sm:px-6
+              lg:px-8
+            "
+            style={{
+              backgroundImage: `url(${Fond})`,
+            }}
+          >
       {/* EN-TÊTE */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-blue-900 italic">
@@ -561,19 +576,19 @@ const handleChange = (e) => {
             <table className="w-full min-w-200">
               <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
-                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-blue-900">
                     Nom
                   </th>
-                   <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                   <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-blue-900">
                     Prénom
                   </th>
-                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-blue-900">
                     Email
                   </th>
-                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide text-blue-900">
                     Statut
                   </th>
-                  <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wide text-blue-900">
                     Actions
                   </th>
                 </tr>
@@ -704,7 +719,7 @@ const handleChange = (e) => {
           <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
               <div>
-                <h2 className="font-semibold text-gray-800">
+                <h2 className="font-semibold text-blue-900">
                   Modifier le gestionnaire
                 </h2>
                 <p className="mt-1 text-xs text-gray-500">
@@ -723,7 +738,7 @@ const handleChange = (e) => {
             <form onSubmit={modifierGestionnaire} className="space-y-4 p-5">
           
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label className="mb-1 block text-sm font-medium text-blue-900">
                   Nom
                 </label>
                 <input
@@ -735,7 +750,7 @@ const handleChange = (e) => {
                 />
               </div>
                   <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label className="mb-1 block text-sm font-medium text-blue-900">
                   Prénom
                 </label>
                 <input
@@ -748,7 +763,7 @@ const handleChange = (e) => {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label className="mb-1 block text-sm font-medium text-blue-900">
                   Email
                 </label>
                 <input

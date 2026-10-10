@@ -63,73 +63,149 @@ const inscription = async (req, res) => {
 
 
 // Connexion
+// Connexion avec protection progressive
 const connexion = async (req, res) => {
     try {
         const { email, mot_de_passe } = req.body;
 
-        // 1. Vérifier les champs
         if (!email || !mot_de_passe) {
             return res.status(400).json({
                 message: "L'email et le mot de passe sont obligatoires"
             });
         }
 
-        // 2. Rechercher l'utilisateur
+        const emailNorm = email.toLowerCase().trim();
+
+        // 1. Récupérer l'état des tentatives
+        const [attempts] = await pool.query(
+            "SELECT * FROM auth_attempts WHERE email = ?",
+            [emailNorm]
+        );
+
+        let attempt = attempts[0] || {
+            failed_attempts: 0,
+            consecutive_locks: 0,
+            lock_until: null
+        };
+
+        const now = new Date();
+
+        // 2. Vérifier si le compte est actuellement bloqué
+        if (attempt.lock_until && new Date(attempt.lock_until) > now) {
+            const remainingMs = new Date(attempt.lock_until) - now;
+            const remainingSeconds = Math.ceil(remainingMs / 1000);
+
+            return res.status(429).json({
+                message: `Trop de tentatives. Réessayez dans ${formatTime(remainingSeconds)}.`,
+                locked: true,
+                lockUntil: attempt.lock_until,
+                remainingSeconds
+            });
+        }
+
+        // 3. Rechercher l'utilisateur
         const [users] = await pool.query(
             "SELECT * FROM utilisateurs WHERE email = ?",
-            [email]
+            [emailNorm]
         );
-
-        if (users.length === 0) {
-            return res.status(401).json({
-                message: "Email ou mot de passe incorrect"
-            });
-        }
 
         const user = users[0];
+        let motDePasseCorrect = false;
 
-        // 3. Vérifier le mot de passe
-        const motDePasseCorrect = await bcrypt.compare(
-            mot_de_passe,
-            user.mot_de_passe
-        );
+        if (user) {
+            motDePasseCorrect = await bcrypt.compare(
+                mot_de_passe,
+                user.mot_de_passe
+            );
+        }
 
-        if (!motDePasseCorrect) {
+        // 4. Échec de connexion
+        if (!user || !motDePasseCorrect) {
+            attempt.failed_attempts += 1;
+
+            // Atteint 5 tentatives → on active un blocage
+            if (attempt.failed_attempts >= 5) {
+                attempt.consecutive_locks += 1;
+                attempt.failed_attempts = 0; // on remet à zéro après chaque lock
+
+                if (attempt.consecutive_locks >= 3) {
+                    // 3e désactivation → 2 heures
+                    attempt.lock_until = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+                } else {
+                    // Sinon → 30 secondes
+                    attempt.lock_until = new Date(now.getTime() + 30 * 1000);
+                }
+            }
+
+            // Sauvegarder l'état
+            await pool.query(
+                `INSERT INTO auth_attempts (email, failed_attempts, consecutive_locks, lock_until)
+                 VALUES (?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE
+                   failed_attempts = VALUES(failed_attempts),
+                   consecutive_locks = VALUES(consecutive_locks),
+                   lock_until = VALUES(lock_until)`,
+                [
+                    emailNorm,
+                    attempt.failed_attempts,
+                    attempt.consecutive_locks,
+                    attempt.lock_until
+                ]
+            );
+
+            // Si on vient de poser un lock, on renvoie l'info
+            if (attempt.lock_until && new Date(attempt.lock_until) > now) {
+                const remainingMs = new Date(attempt.lock_until) - now;
+                const remainingSeconds = Math.ceil(remainingMs / 1000);
+
+                return res.status(429).json({
+                    message: `Trop de tentatives. Réessayez dans ${formatTime(remainingSeconds)}.`,
+                    locked: true,
+                    lockUntil: attempt.lock_until,
+                    remainingSeconds
+                });
+            }
+
             return res.status(401).json({
                 message: "Email ou mot de passe incorrect"
             });
         }
 
-        // 4. Vérifier le statut du compte
+        // 5. Vérifier le statut du compte
         if (user.statut === "DESACTIVE") {
             return res.status(403).json({
                 message: "Votre compte est désactivé. Contactez l'administrateur."
             });
         }
 
-        // 5. Créer le JWT
+        // 6. Connexion réussie → on reset tout
+        await pool.query(
+            `INSERT INTO auth_attempts (email, failed_attempts, consecutive_locks, lock_until)
+             VALUES (?, 0, 0, NULL)
+             ON DUPLICATE KEY UPDATE
+               failed_attempts = 0,
+               consecutive_locks = 0,
+               lock_until = NULL`,
+            [emailNorm]
+        );
+
+        // 7. Créer le JWT
         const token = jwt.sign(
             {
                 id: user.id_utilisateur,
                 role: user.role
             },
             process.env.JWT_SECRET,
-            {
-                expiresIn: "1d"
-            }
+            { expiresIn: "1d" }
         );
 
-        // 6. Stocker le JWT dans un cookie
         res.cookie("token", token, {
             httpOnly: true,
             secure: false,
             sameSite: "lax",
-            //Il s'agit de la durée de vie du cookie en millisecondes. 
-            // Ici, le cookie expirera après 24 heures.
             maxAge: 24 * 60 * 60 * 1000
         });
 
-        // 7. Réponse
         res.status(200).json({
             message: "Connexion réussie",
             utilisateur: {
@@ -144,12 +220,28 @@ const connexion = async (req, res) => {
 
     } catch (error) {
         console.error("Erreur connexion :", error);
-
         res.status(500).json({
             message: "Erreur serveur"
         });
     }
 };
+
+// Petite fonction utilitaire
+function formatTime(seconds) {
+    if (seconds < 60) return `${seconds} seconde${seconds > 1 ? "s" : ""}`;
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (minutes < 60) {
+        return secs > 0
+            ? `${minutes} min ${secs} s`
+            : `${minutes} minute${minutes > 1 ? "s" : ""}`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0
+        ? `${hours} h ${mins} min`
+        : `${hours} heure${hours > 1 ? "s" : ""}`;
+}
 
 
 // Identifier l'utilisateur connecté

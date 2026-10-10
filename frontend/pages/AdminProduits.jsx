@@ -1033,7 +1033,7 @@ const ajouterProduit = async (e) => {
 
             <form onSubmit={modifierProduit} className="space-y-4 p-5">
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label className="mb-1 block text-sm font-medium text-blue-900">
                   Nom
                 </label>
                 <input
@@ -1051,7 +1051,7 @@ const ajouterProduit = async (e) => {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label className="mb-1 block text-sm font-medium text-blue-900">
                   Description
                 </label>
                 <textarea
@@ -1069,7 +1069,7 @@ const ajouterProduit = async (e) => {
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                  <label className="mb-1 block text-sm font-medium text-blue-900">
                     Prix
                   </label>
                   <input
@@ -1088,7 +1088,7 @@ const ajouterProduit = async (e) => {
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                  <label className="mb-1 block text-sm font-medium text-blue-900">
                     Seuil minimum
                   </label>
                   <input
@@ -1108,7 +1108,7 @@ const ajouterProduit = async (e) => {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label className="mb-1 block text-sm font-medium text-blue-900">
                   Catégorie
                 </label>
                 <select
