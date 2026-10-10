@@ -13,6 +13,7 @@ import Gestionnaires from "../pages/Gestionnaires"
 
 import ProtectedRoute from "./ProtectedRoute";
 import Layout from "../layouts/Layout"
+import Profil from "../pages/Profil";
 
 const AppRoutes = () => {
     return (
@@ -98,6 +99,16 @@ const AppRoutes = () => {
                         </ProtectedRoute>
                     }
                 />
+                <Route
+                    path="/admin/profil"
+                    element={
+                        <ProtectedRoute roles={["ADMIN"]}>
+                            <Layout>
+                                <Profil />
+                            </Layout>
+                        </ProtectedRoute>
+                    }
+                />
 
 
 
@@ -141,6 +152,16 @@ const AppRoutes = () => {
                         <ProtectedRoute roles={["GESTIONNAIRE"]}>
                             <Layout>
                                 <Alertes />
+                            </Layout>
+                        </ProtectedRoute>
+                    }
+                />
+                 <Route
+                    path="/gestionnaire/profil"
+                    element={
+                        <ProtectedRoute roles={["GESTIONNAIRE"]}>
+                            <Layout>
+                                <Profil />
                             </Layout>
                         </ProtectedRoute>
                     }

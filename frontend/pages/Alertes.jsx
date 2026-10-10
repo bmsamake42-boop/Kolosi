@@ -382,7 +382,7 @@ const Alertes = () => {
           >
       {/* En-tête */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-blue-900 italic">
+        <h1 className="text-2xl font-bold tracking-tight text-blue-950 sm:text-3xl">
           Alertes de stock
         </h1>
         <p className="mt-1 text-sm text-gray-500">

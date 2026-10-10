@@ -325,6 +325,34 @@ const Mouvements = () => {
     indexDebut,
     indexDebut + MOUVEMENTS_PAR_PAGE
   );
+  // Numéros de pages à afficher sur ordinateur
+const pagesVisibles = useMemo(() => {
+  const pages = [];
+  const debut = Math.max(2, page - 2);
+  const fin = Math.min(totalPages - 1, page + 2);
+
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
+  pages.push(1);
+
+  if (debut > 2) {
+    pages.push("...");
+  }
+
+  for (let i = debut; i <= fin; i++) {
+    pages.push(i);
+  }
+
+  if (fin < totalPages - 1) {
+    pages.push("...");
+  }
+
+  pages.push(totalPages);
+
+  return pages;
+}, [page, totalPages]);
 
   useEffect(() => {
     if (totalPages > 0 && page > totalPages) {
@@ -381,7 +409,7 @@ const Mouvements = () => {
         >
       {/* En-tête */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold italic text-blue-900 md:text-3xl">
+        <h1 className="text-2xl font-bold tracking-tight text-blue-950 sm:text-3xl">
           Mouvements de stock
         </h1>
         <p className="mt-1 text-sm text-gray-500">
@@ -826,44 +854,91 @@ const Mouvements = () => {
         )}
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 border-t border-gray-200 p-4">
-            <button
-              type="button"
-              disabled={page === 1}
-              onClick={() => setPage((prev) => prev - 1)}
-              className="rounded-lg border border-gray-300 p-2 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <ChevronLeft size={18} />
-            </button>
+        {/* Pagination responsive */}
+{totalPages > 1 && (
+  <div className="border-t border-gray-200 px-3 py-4 sm:px-4">
+    <div className="flex items-center justify-between gap-3">
 
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-              (numero) => (
-                <button
-                  key={numero}
-                  type="button"
-                  onClick={() => setPage(numero)}
-                  className={`h-9 min-w-9 rounded-lg px-2 text-sm font-medium ${
-                    page === numero
-                      ? "bg-blue-800 text-white"
-                      : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  {numero}
-                </button>
-              )
-            )}
+      {/* Bouton précédent */}
+      <button
+        type="button"
+        disabled={page === 1}
+        onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+        aria-label="Page précédente"
+        className="flex shrink-0 items-center gap-1 rounded-lg border border-gray-300 p-2 text-sm text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 sm:px-3"
+      >
+        <ChevronLeft size={18} />
+        <span className="hidden sm:inline">Précédent</span>
+      </button>
 
-            <button
-              type="button"
-              disabled={page === totalPages}
-              onClick={() => setPage((prev) => prev + 1)}
-              className="rounded-lg border border-gray-300 p-2 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+      {/* Pagination mobile */}
+      <div className="flex items-center gap-1 sm:hidden">
+        <span className="text-sm font-semibold text-blue-900">
+          {page}
+        </span>
+
+        <span className="text-sm text-gray-400">/</span>
+
+        <span className="text-sm text-gray-600">
+          {totalPages}
+        </span>
+      </div>
+
+      {/* Pagination ordinateur et tablette */}
+      <div className="hidden items-center gap-1 sm:flex">
+        {pagesVisibles.map((numero, index) =>
+          numero === "..." ? (
+            <span
+              key={`ellipsis-${index}`}
+              className="px-1 text-gray-400"
+              aria-hidden="true"
             >
-              <ChevronRight size={18} />
+              …
+            </span>
+          ) : (
+            <button
+              key={numero}
+              type="button"
+              onClick={() => setPage(numero)}
+              aria-current={page === numero ? "page" : undefined}
+              aria-label={`Page ${numero}`}
+              className={`h-9 min-w-9 rounded-lg px-2 text-sm font-medium transition ${
+                page === numero
+                  ? "bg-blue-800 text-white"
+                  : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              {numero}
             </button>
-          </div>
+          )
         )}
+      </div>
+
+      {/* Bouton suivant */}
+      <button
+        type="button"
+        disabled={page === totalPages}
+        onClick={() =>
+          setPage((prev) => Math.min(totalPages, prev + 1))
+        }
+        aria-label="Page suivante"
+        className="flex shrink-0 items-center gap-1 rounded-lg border border-gray-300 p-2 text-sm text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 sm:px-3"
+      >
+        <span className="hidden sm:inline">Suivant</span>
+        <ChevronRight size={18} />
+      </button>
+
+    </div>
+
+    {/* Informations sur les résultats */}
+    <p className="mt-3 text-center text-xs text-gray-500">
+      Affichage de {indexDebut + 1} à{" "}
+      {Math.min(indexDebut + MOUVEMENTS_PAR_PAGE, mouvementsFiltres.length)}{" "}
+      sur {mouvementsFiltres.length} mouvement
+      {mouvementsFiltres.length > 1 ? "s" : ""}
+    </p>
+  </div>
+)}
       </section>
     </div>
   );

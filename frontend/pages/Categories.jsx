@@ -395,7 +395,7 @@ useEffect(() => {
           >
       {/* En-tête */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-blue-900 italic">Catégories</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-blue-950 sm:text-3xl">Catégories</h1>
         <p className="text-sm text-gray-500 mt-1">
           Gérez les catégories de vos produits
         </p>

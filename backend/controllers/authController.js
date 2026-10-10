@@ -286,11 +286,180 @@ const deconnexion = (req, res) => {
         message: "Déconnexion réussie"
     });
 };
+// Modifier le profil de l'utilisateur connecté
+const modifierProfil = async (req, res) => {
+    try {
+        const { nom, prenom, email } = req.body;
+        const idUtilisateur = req.user.id;
+
+        // Vérifier les champs obligatoires
+        if (!nom?.trim() || !prenom?.trim() || !email?.trim()) {
+            return res.status(400).json({
+                message: "Tous les champs sont obligatoires"
+            });
+        }
+
+        const nomNormalise = nom.trim();
+        const prenomNormalise = prenom.trim();
+        const emailNormalise = email.trim().toLowerCase();
+
+        // Vérifier si l'adresse e-mail est déjà utilisée
+        const [utilisateursExistants] = await pool.query(
+            `SELECT id_utilisateur
+             FROM utilisateurs
+             WHERE email = ?
+             AND id_utilisateur != ?`,
+            [emailNormalise, idUtilisateur]
+        );
+
+        if (utilisateursExistants.length > 0) {
+            return res.status(409).json({
+                message: "Cette adresse e-mail est déjà utilisée"
+            });
+        }
+
+        // Modifier les informations de l'utilisateur connecté
+        await pool.query(
+            `UPDATE utilisateurs
+             SET nom = ?, prenom = ?, email = ?
+             WHERE id_utilisateur = ?`,
+            [
+                nomNormalise,
+                prenomNormalise,
+                emailNormalise,
+                idUtilisateur
+            ]
+        );
+
+        // Récupérer les informations actualisées
+        const [utilisateurs] = await pool.query(
+            `SELECT id_utilisateur, nom, prenom, email, role, statut
+             FROM utilisateurs
+             WHERE id_utilisateur = ?`,
+            [idUtilisateur]
+        );
+
+        return res.status(200).json({
+            message: "Profil modifié avec succès",
+            utilisateur: utilisateurs[0]
+        });
+
+    } catch (error) {
+        console.error("Erreur modifierProfil :", error);
+
+        return res.status(500).json({
+            message: "Erreur serveur"
+        });
+    }
+};
+
+// Changer le mot de passe de l'utilisateur connecté
+const changerMotDePasse = async (req, res) => {
+    try {
+        const {
+            ancien_mot_de_passe,
+            nouveau_mot_de_passe,
+            confirmation_mot_de_passe
+        } = req.body;
+
+        const idUtilisateur = req.user.id;
+
+        // Vérifier les champs
+        if (
+            !ancien_mot_de_passe ||
+            !nouveau_mot_de_passe ||
+            !confirmation_mot_de_passe
+        ) {
+            return res.status(400).json({
+                message: "Tous les champs sont obligatoires"
+            });
+        }
+
+        // Vérifier la longueur minimale
+        if (nouveau_mot_de_passe.length < 8) {
+            return res.status(400).json({
+                message: "Le nouveau mot de passe doit contenir au moins 8 caractères"
+            });
+        }
+
+        // Vérifier la confirmation
+        if (nouveau_mot_de_passe !== confirmation_mot_de_passe) {
+            return res.status(400).json({
+                message: "Les nouveaux mots de passe ne correspondent pas"
+            });
+        }
+
+        // Récupérer le mot de passe actuel
+        const [utilisateurs] = await pool.query(
+            `SELECT mot_de_passe
+             FROM utilisateurs
+             WHERE id_utilisateur = ?`,
+            [idUtilisateur]
+        );
+
+        if (utilisateurs.length === 0) {
+            return res.status(404).json({
+                message: "Utilisateur introuvable"
+            });
+        }
+
+        // Vérifier l'ancien mot de passe
+        const motDePasseCorrect = await bcrypt.compare(
+            ancien_mot_de_passe,
+            utilisateurs[0].mot_de_passe
+        );
+
+        if (!motDePasseCorrect) {
+            return res.status(400).json({
+                message: "L'ancien mot de passe est incorrect"
+            });
+        }
+
+        // Éviter de réutiliser le même mot de passe
+        const memeMotDePasse = await bcrypt.compare(
+            nouveau_mot_de_passe,
+            utilisateurs[0].mot_de_passe
+        );
+
+        if (memeMotDePasse) {
+            return res.status(400).json({
+                message: "Le nouveau mot de passe doit être différent de l'ancien"
+            });
+        }
+
+        // Hasher le nouveau mot de passe
+        const nouveauHash = await bcrypt.hash(
+            nouveau_mot_de_passe,
+            10
+        );
+
+        // Enregistrer le nouveau mot de passe
+        await pool.query(
+            `UPDATE utilisateurs
+             SET mot_de_passe = ?
+             WHERE id_utilisateur = ?`,
+            [nouveauHash, idUtilisateur]
+        );
+
+        return res.status(200).json({
+            message: "Mot de passe modifié avec succès"
+        });
+
+    } catch (error) {
+        console.error("Erreur changerMotDePasse :", error);
+
+        return res.status(500).json({
+            message: "Erreur serveur"
+        });
+    }
+};
 
 
 module.exports = {
     inscription,
     connexion,
     getMe,
-    deconnexion
+    deconnexion,
+    modifierProfil,
+    changerMotDePasse
 };

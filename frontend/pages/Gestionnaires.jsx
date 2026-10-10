@@ -131,51 +131,57 @@ const handleChange = (e) => {
   });
 };
   const ajouterGestionnaire = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      setMessage("");
-      setErreur("");
-      setIsAdding(true);
+  // Validation mot de passe minimum 8 caractères
+  if (formulaire.mot_de_passe.length < 8) {
+    setErreur("Le mot de passe doit contenir au moins 8 caractères");
+    return;
+  }
 
-      // Loading de 3 secondes
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+  try {
+    setMessage("");
+    setErreur("");
+    setIsAdding(true);
 
-      const response = await fetch(`${API_URL}/admin/gestionnaires`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(formulaire),
-      });
+    // Loading de 3 secondes
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
-      const data = await response.json();
+    const response = await fetch(`${API_URL}/admin/gestionnaires`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(formulaire),
+    });
 
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Erreur lors de l'ajout du gestionnaire"
-        );
-      }
+    const data = await response.json();
 
-      setMessage(data.message);
-
-      setFormulaire({
-        nom: "",
-        prenom: "",
-        email: "",
-        mot_de_passe: "",
-      });
-
-      setMotDePasseVisible(false);
-      await chargerGestionnaires();
-    } catch (error) {
-      console.error(error);
-      setErreur(error.message);
-    } finally {
-      setIsAdding(false);
+    if (!response.ok) {
+      throw new Error(
+        data.message || "Erreur lors de l'ajout du gestionnaire"
+      );
     }
-  };
+
+    setMessage(data.message);
+
+    setFormulaire({
+      nom: "",
+      prenom: "",
+      email: "",
+      mot_de_passe: "",
+    });
+
+    setMotDePasseVisible(false);
+    await chargerGestionnaires();
+  } catch (error) {
+    console.error(error);
+    setErreur(error.message);
+  } finally {
+    setIsAdding(false);
+  }
+};
 
   // =========================
   // OUVRIR MODIFICATION
@@ -378,7 +384,7 @@ const handleChange = (e) => {
           >
       {/* EN-TÊTE */}
       <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-blue-900 italic">
+        <h1 className="text-2xl font-bold tracking-tight text-blue-950 sm:text-3xl">
           Gestionnaires
         </h1>
         <p className="mt-1 text-sm text-gray-500">
@@ -469,14 +475,15 @@ const handleChange = (e) => {
             </label>
             <div className="relative">
               <input
-                type={motDePasseVisible ? "text" : "password"}
-                name="mot_de_passe"
-                value={formulaire.mot_de_passe}
-                onChange={handleChange}
-                placeholder="Mot de passe"
-                disabled={isAdding}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
-              />
+              type={motDePasseVisible ? "text" : "password"}
+              name="mot_de_passe"
+              value={formulaire.mot_de_passe}
+              onChange={handleChange}
+              placeholder="Mot de passe"
+              minLength={8}
+              disabled={isAdding}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+            />
               <button
                 type="button"
                 onClick={() => setMotDePasseVisible(!motDePasseVisible)}
