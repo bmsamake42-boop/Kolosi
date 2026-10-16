@@ -509,7 +509,7 @@ const FormulaireProfil = ({
     enregistrement,
     onActiverModification
 }) => (
-    <section className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+    <section className="rounded-2xl  bg-white shadow-sm border-t-4 border-blue-900">
         <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <div>
                 <h2 className="text-lg font-bold text-gray-900">
@@ -649,7 +649,7 @@ const FormulaireMotDePasse = ({
     enregistrement,
     onActiverModification
 }) => (
-    <section className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+    <section className="rounded-2xl bg-white shadow-sm border-t-4 border-blue-900">
         <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-700">

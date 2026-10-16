@@ -300,7 +300,7 @@ const Alertes = () => {
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-gray-800">
+            <p className="text-sm font-semibold text-blue-900">
               {alerte.nom_produit}
             </p>
             <p className="mt-1 text-xs text-gray-500">
@@ -398,8 +398,8 @@ const Alertes = () => {
               <PackageX size={22} />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Ruptures de stock</p>
-              <p className="text-2xl font-bold text-gray-800">{ruptures.length}</p>
+              <p className="text-sm text-blue-900">Ruptures de stock</p>
+              <p className="text-2xl font-bold text-blue-900">{ruptures.length}</p>
             </div>
           </div>
         </div>
@@ -410,8 +410,8 @@ const Alertes = () => {
               <AlertTriangle size={22} />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Stocks faibles</p>
-              <p className="text-2xl font-bold text-gray-800">
+              <p className="text-sm text-blue-900">Stocks faibles</p>
+              <p className="text-2xl font-bold text-blue-900">
                 {stocksFaibles.length}
               </p>
             </div>
@@ -463,11 +463,11 @@ const Alertes = () => {
       ) : (
         <div className="space-y-6">
           {/* Ruptures */}
-          <section className="overflow-hidden rounded-xl bg-white shadow-sm">
+          <section className="overflow-hidden rounded-xl bg-white shadow-sm border-t-4 border-blue-900">
             <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4">
               <div className="flex items-center gap-2">
                 <PackageX size={19} className="text-red-600" />
-                <h2 className="font-semibold text-gray-800">Ruptures de stock</h2>
+                <h2 className="font-semibold text-blue-900">Ruptures de stock</h2>
               </div>
               <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700">
                 {ruptures.length}
@@ -502,11 +502,11 @@ const Alertes = () => {
           </section>
 
           {/* Stocks faibles */}
-          <section className="overflow-hidden rounded-xl bg-white shadow-sm">
+          <section className="overflow-hidden rounded-xl bg-white shadow-sm border-t-4 border-blue-900">
             <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4">
               <div className="flex items-center gap-2">
                 <AlertTriangle size={19} className="text-orange-600" />
-                <h2 className="font-semibold text-gray-800">Stocks faibles</h2>
+                <h2 className="font-semibold text-blue-900">Stocks faibles</h2>
               </div>
               <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700">
                 {stocksFaibles.length}

@@ -6,7 +6,10 @@ const {
     ajouterGestionnaire,
     modifierGestionnaire,
     desactiverGestionnaire,
-    reactiverGestionnaire
+    reactiverGestionnaire,
+
+    getAdministrateurs,
+    ajouterAdministrateur
 } = require("../controllers/adminController");
 
 const verifyToken = require("../middlewares/authMiddleware");
@@ -51,5 +54,13 @@ router.put(
     verifyToken,
     verifyRole("ADMIN"),
     reactiverGestionnaire
+);
+
+//
+router.post(
+    "/administrateurs",
+    verifyToken,
+    verifyRole("ADMIN"),
+    ajouterAdministrateur
 );
 module.exports = router;

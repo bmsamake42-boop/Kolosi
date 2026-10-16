@@ -38,6 +38,12 @@ const Gestionnaires = () => {
     email: "",
     mot_de_passe: "",
   });
+  const [formulaire2, setFormulaire2] = useState({
+    nom: "",
+    prenom: "",
+    email: "",
+    mot_de_passe: ""
+  })
 
   const [motDePasseVisible, setMotDePasseVisible] = useState(false);
   const [isAdding, setIsAdding] = useState(false); // loading 3s
@@ -130,6 +136,21 @@ const handleChange = (e) => {
     [name]: valeurFinale,
   });
 };
+const handleChangeAdmin = (e) => {
+  const { name, value } = e.target;
+
+  // On capitalise uniquement nom et prénom
+  const champsACapitaliser = ["nom","prenom"];
+
+  const valeurFinale = champsACapitaliser.includes(name)
+    ? capitalizeWords(value)
+    : value;
+
+  setFormulaire2({
+    ...formulaire2,
+    [name]: valeurFinale,
+  });
+};
   const ajouterGestionnaire = async (e) => {
   e.preventDefault();
 
@@ -182,6 +203,61 @@ const handleChange = (e) => {
     setIsAdding(false);
   }
 };
+//Ajouter Admin
+
+  const ajouterAdministrateur = async (e) => {
+  e.preventDefault();
+
+  // Validation mot de passe minimum 8 caractères
+  if (formulaire2.mot_de_passe.length < 8) {
+    setErreur("Le mot de passe doit contenir au moins 8 caractères");
+    return;
+  }
+
+  try {
+    setMessage("");
+    setErreur("");
+    setIsAdding(true);
+
+    // Loading de 3 secondes
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    const response = await fetch(`${API_URL}/admin/administrateurs`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(formulaire2),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || "Erreur lors de l'ajout de l'administrateur"
+      );
+    }
+
+    setMessage(data.message);
+
+    setFormulaire2({
+      nom: "",
+      prenom: "",
+      email: "",
+      mot_de_passe: "",
+    });
+
+    setMotDePasseVisible(false);
+    await chargerGestionnaires();
+  } catch (error) {
+    console.error(error);
+    setErreur(error.message);
+  } finally {
+    setIsAdding(false);
+  }
+};
+
 
   // =========================
   // OUVRIR MODIFICATION
@@ -406,7 +482,7 @@ const handleChange = (e) => {
       )}
 
       {/* FORMULAIRE AJOUT */}
-      <div className="mb-6 rounded-xl bg-white p-5 shadow-sm">
+      <div className="mb-6 rounded-xl bg-white p-5 shadow-sm border-t-4 border-blue-900">
         <div className="mb-4 flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-900 text-white">
             <UserPlus size={19} />
@@ -427,20 +503,6 @@ const handleChange = (e) => {
         >
            <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">
-              Nom
-            </label>
-            <input
-              type="text"
-              name="nom"
-              value={formulaire.nom}
-              onChange={handleChange}
-              placeholder="Nom"
-              disabled={isAdding}
-              className="capitalize w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
               Prénom
             </label>
             <input
@@ -449,6 +511,20 @@ const handleChange = (e) => {
               value={formulaire.prenom}
               onChange={handleChange}
               placeholder="Prénom"
+              disabled={isAdding}
+              className="capitalize w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+            />
+          </div>
+           <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Nom
+            </label>
+            <input
+              type="text"
+              name="nom"
+              value={formulaire.nom}
+              onChange={handleChange}
+              placeholder="Nom"
               disabled={isAdding}
               className="capitalize w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
             />
@@ -535,6 +611,137 @@ const handleChange = (e) => {
         </form>
       </div>
 
+      {/** ADMINISTRATEUR */}
+       <div className="mb-6 rounded-xl bg-white p-5 shadow-sm border-t-4 border-blue-900">
+        <div className="mb-4 flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-900 text-white">
+            <UserPlus size={19} />
+          </div>
+          <div>
+            <h2 className="font-semibold text-blue-900">
+              Ajouter un administrateur
+            </h2>
+            <p className="text-xs text-gray-500">
+              Créez un nouveau compte administrateur
+            </p>
+          </div>
+        </div>
+
+        <form
+          onSubmit={ajouterAdministrateur}
+          className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5"
+        >
+           
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Prénom
+            </label>
+            <input
+              type="text"
+              name="prenom"
+              value={formulaire2.prenom}
+              onChange={handleChangeAdmin}
+              placeholder="Prénom"
+              disabled={isAdding}
+              className="capitalize w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Nom
+            </label>
+            <input
+              type="text"
+              name="nom"
+              value={formulaire2.nom}
+              onChange={handleChangeAdmin}
+              placeholder="Nom"
+              disabled={isAdding}
+              className="capitalize w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formulaire2.email}
+              onChange={handleChangeAdmin}
+              placeholder="email@exemple.com"
+              disabled={isAdding}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Mot de passe
+            </label>
+            <div className="relative">
+              <input
+              type={motDePasseVisible ? "text" : "password"}
+              name="mot_de_passe"
+              value={formulaire2.mot_de_passe}
+              onChange={handleChangeAdmin}
+              placeholder="Mot de passe"
+              minLength={8}
+              disabled={isAdding}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-60"
+            />
+              <button
+                type="button"
+                onClick={() => setMotDePasseVisible(!motDePasseVisible)}
+                disabled={isAdding}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+              >
+                {motDePasseVisible ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-end">
+            <button
+              type="submit"
+              disabled={isAdding}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isAdding ? (
+                <>
+                  <svg
+                    className="h-4 w-4 animate-spin"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                  Ajout en cours...
+                </>
+              ) : (
+                <>
+                  <UserPlus size={18} />
+                  Ajouter
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+
       {/* FILTRES */}
       <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="relative w-full md:max-w-md">
@@ -563,7 +770,7 @@ const handleChange = (e) => {
       </div>
 
       {/* TABLEAU */}
-      <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl bg-white shadow-sm border-t-4 border-blue-900">
         {chargement ? (
           <div className="flex items-center justify-center py-16 text-sm text-gray-500">
             Chargement des gestionnaires...

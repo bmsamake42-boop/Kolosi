@@ -823,9 +823,10 @@ const pagesVisibles = useMemo(() => {
                     </th>
                   </tr>
                 </thead>
-
+                
                 <tbody className="divide-y divide-gray-100">
                   {produitsAffiches.map((produit) => (
+                  
                     <tr
                       key={produit.id_produit}
                       className="transition hover:bg-gray-50"

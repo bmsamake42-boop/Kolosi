@@ -419,7 +419,7 @@ useEffect(() => {
     {!voirArchives && (
       <form
         onSubmit={ajouterCategorie}
-        className="mb-6 rounded-xl bg-white p-4 shadow-sm"
+        className="mb-6 rounded-xl bg-white p-4 shadow-sm border-t-4 border-blue-900"
       >
         <div className="flex flex-col gap-3 md:flex-row">
           <div className="flex-1">
@@ -523,7 +523,7 @@ useEffect(() => {
       </div>
 
       {/* Tableau */}
-      <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl bg-white shadow-sm border-t-4 border-blue-900">
         <div className="border-b border-gray-100 px-4 py-4">
           <h2 className="font-semibold text-blue-900">
             {voirArchives ? "Catégories archivées" : "Catégories actives"}
@@ -621,9 +621,6 @@ useEffect(() => {
                   <div>
                     <p className="text-sm font-medium text-gray-800">
                       {categorie.nom_categorie}
-                    </p>
-                    <p className="mt-1 text-xs text-gray-400">
-                      ID : {categorie.id_categorie}
                     </p>
                   </div>
 

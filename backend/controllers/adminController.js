@@ -372,7 +372,89 @@ const reactiverGestionnaire = async (req, res) => {
         });
     }
 };
+// ADMINISTRATEUR
+const getAdministrateurs = async (req, res) => {
+    try {
+        const [administrateurs] = await pool.query(`
+            SELECT
+                id_utilisateur,
+                nom,
+                prenom,
+                email,
+                statut
+            FROM utilisateurs
+            WHERE role = 'ADMIN'
+            ORDER BY nom ASC
+        `);
 
+        res.status(200).json({
+            administrateurs
+        });
+
+    } catch (error) {
+        console.error("Erreur récupération administrateurs :", error);
+
+        res.status(500).json({
+            message: "Erreur lors de la récupération des administarteurs"
+        });
+    }
+};
+const ajouterAdministrateur = async (req, res) => {
+    try {
+        const { nom, prenom, email, mot_de_passe } = req.body;
+
+        // 1. Vérification des champs
+        if (!nom || !prenom || !email || !mot_de_passe) {
+            return res.status(400).json({
+                message: "Tous les champs sont obligatoires"
+            });
+        }
+
+        // 2. Vérifier si l'email existe déjà
+        const [users] = await pool.query(
+            "SELECT id_utilisateur FROM utilisateurs WHERE email = ?",
+            [email]
+        );
+
+        if (users.length > 0) {
+            return res.status(409).json({
+                message: "Cet email est déjà utilisé"
+            });
+        }
+
+        // 3. Hasher le mot de passe
+        const motDePasseHash = await bcrypt.hash(
+            mot_de_passe,
+            10
+        );
+
+        // 4. Créer l'administrateur
+        const [result] = await pool.query(
+            `INSERT INTO utilisateurs
+            (nom, prenom, email, mot_de_passe, role, statut)
+            VALUES (?, ?, ?, ?, 'ADMIN', 'ACTIF')`,
+            [
+                nom,
+                prenom,
+                email,
+                motDePasseHash
+            ]
+        );
+
+        // 5. Réponse
+        res.status(201).json({
+            message: "Administrateur ajouté avec succes",
+            id_utilisateur: result.insertId
+        });
+
+    } catch (error) {
+        console.error("Erreur ajout gestionnaire :", error);
+
+        res.status(500).json({
+            message: "Erreur lors de l'ajout du gestionnaire"
+        });
+    }
+};
 
 module.exports = {
     getDashboardAdmin,
@@ -380,5 +462,8 @@ module.exports = {
     ajouterGestionnaire,
     modifierGestionnaire,
     desactiverGestionnaire,
-    reactiverGestionnaire
+    reactiverGestionnaire,
+
+    getAdministrateurs,
+    ajouterAdministrateur
 };
