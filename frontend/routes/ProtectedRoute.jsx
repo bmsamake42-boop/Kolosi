@@ -9,7 +9,7 @@ const ProtectedRoute = ({ children, roles }) => {
         const verifierUtilisateur = async () => {
             try {
                 const response = await fetch(
-                    "${import.meta.env.VITE_API_URL}/auth/me",
+                    `${import.meta.env.VITE_API_URL}/auth/me`,
                     {
                         method: "GET",
                         credentials: "include",

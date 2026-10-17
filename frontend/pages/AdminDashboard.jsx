@@ -48,7 +48,7 @@ const AdminDashboard = () => {
     const chargerDashboard = async () => {
       try {
         const response = await fetch(
-          "${import.meta.env.VITE_API_URL}/admin/dashboard",
+          `${import.meta.env.VITE_API_URL}/admin/dashboard`,
           {
             method: "GET",
             credentials: "include",

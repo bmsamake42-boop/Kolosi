@@ -12,7 +12,7 @@ import {
 import ConfirmationModal from "../composants/ConfirmationModal";
 import fond from "../src/assets/FondDash.jpg"
 
-const API_URL = "${import.meta.env.VITE_API_URL}";
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 
 const Categories = () => {
   // state de l'atat de chargement en appuyant sur le bouton d'ajout

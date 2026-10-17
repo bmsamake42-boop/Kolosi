@@ -11,7 +11,7 @@ import {
 import ConfirmationModal from "../composants/ConfirmationModal";
 import Fond from "../src/assets/FondDash.jpg"
 
-const API_URL = "${import.meta.env.VITE_API_URL}";
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 
 const Alertes = () => {
   const [alertes, setAlertes] = useState([]);
