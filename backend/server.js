@@ -17,8 +17,20 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
+const originesAutorisees = [
+    "http://localhost:5173",
+    process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: function (origin, callback) {
+        // Autoriser les requêtes sans origine, par exemple certains outils de test
+        if (!origin || originesAutorisees.includes(origin)) {
+            return callback(null, true);
+        }
+
+        return callback(new Error("Origine non autorisée par CORS"));
+    },
     credentials: true
 }));
 
