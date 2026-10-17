@@ -47,7 +47,7 @@ const GestionnaireDashboard = () => {
     const chargerDashboard = async () => {
       try {
         const response = await fetch(
-          "http://localhost:5000/api/gestionnaire/dashboard",
+          "${import.meta.env.VITE_API_URL}/gestionnaire/dashboard",
           {
             method: "GET",
             credentials: "include",

@@ -14,7 +14,7 @@ import {
 import ConfirmationModal from "../composants/ConfirmationModal";
 import Fond from "../src/assets/FondDash.jpg"
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "${import.meta.env.VITE_API_URL}";
 const gestionnairesParPage = 5;
 
 const Gestionnaires = () => {

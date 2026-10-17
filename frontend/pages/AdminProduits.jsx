@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import ConfirmationModal from "../composants/ConfirmationModal";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "${import.meta.env.VITE_API_URL}";
 
 const AdminProduits = () => {
   //state pour le loading

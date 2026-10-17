@@ -32,7 +32,7 @@ const Navbar = () => {
   useEffect(() => {
     const recupererUtilisateur = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/auth/me", {
+        const response = await fetch("${import.meta.env.VITE_API_URL}/auth/me", {
           method: "GET",
           credentials: "include",
         });
@@ -62,7 +62,7 @@ const Navbar = () => {
     setIsConfirmLoading(true);
 
     try {
-      await fetch("http://localhost:5000/api/auth/deconnexion", {
+      await fetch("${import.meta.env.VITE_API_URL}/auth/deconnexion", {
         method: "POST",
         credentials: "include",
       });
