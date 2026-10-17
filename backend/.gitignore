@@ -1,2 +1,16 @@
+# Dépendances Node.js
 node_modules/
+
+# Variables d'environnement et secrets
 .env
+.env.*
+!.env.example
+
+# Certificat SSL Aiven
+certificates/ca.pem
+
+# Fichiers générés par React/Vite
+frontend/dist/
+
+# Fichiers de logs
+npm-debug.log*

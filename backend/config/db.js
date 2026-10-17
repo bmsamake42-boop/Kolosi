@@ -18,7 +18,9 @@ const configuration = {
 
 // Activer SSL uniquement lorsque cela est demandé
 if (process.env.DB_SSL === "true") {
-    const caPath = path.join(__dirname, "../certificates/ca.pem");
+    const caPath =
+        process.env.DB_CA_PATH ||
+        path.join(__dirname, "../certificates/ca.pem");
 
     configuration.ssl = {
         ca: fs.readFileSync(caPath, "utf8"),
