@@ -278,8 +278,9 @@ const getMe = async (req, res) => {
 const deconnexion = (req, res) => {
     res.clearCookie("token", {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax"
+        secure: true,
+        sameSite: "none",
+        path: "/"
     });
 
     res.status(200).json({
